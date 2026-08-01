@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Core\Support\FamilyContext;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Ein Kontext pro Request: der Global Scope auf BelongsToFamily-Models
+        // und die Controller muessen dieselbe Familie sehen.
+        $this->app->singleton(FamilyContext::class);
     }
 
     /**
@@ -19,6 +23,27 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Die Models liegen nach Modulen sortiert, nicht im Standardordner
+        // app/Models. Ohne diese Zuordnung sucht Eloquent die Factory unter
+        // Database\Factories\Core\Models\UserFactory und findet sie nicht.
         //
+        //   App\Core\Models\User             -> Database\Factories\Core\UserFactory
+        //   App\Modules\Catalog\Models\Item  -> Database\Factories\Catalog\ItemFactory
+        //
+        // Der Modulname bleibt im Pfad, damit gleichnamige Models aus
+        // verschiedenen Modulen sich nicht in die Quere kommen.
+        Factory::guessFactoryNamesUsing(function (string $modelName) {
+            $module = preg_replace(
+                ['/^App\\\\Core\\\\Models\\\\.*$/', '/^App\\\\Modules\\\\([^\\\\]+)\\\\Models\\\\.*$/'],
+                ['Core', '$1'],
+                $modelName
+            );
+
+            if ($module === $modelName) {
+                return 'Database\\Factories\\'.class_basename($modelName).'Factory';
+            }
+
+            return 'Database\\Factories\\'.$module.'\\'.class_basename($modelName).'Factory';
+        });
     }
 }

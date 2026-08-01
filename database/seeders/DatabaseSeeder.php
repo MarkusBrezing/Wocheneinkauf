@@ -2,24 +2,25 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Core\Models\User;
+use App\Core\Services\FamilyProvisioner;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Bewusst ohne WithoutModelEvents: die public_id wird im creating-Hook
+     * vergeben, ohne Events blieben die Spalten leer.
      */
-    public function run(): void
+    public function run(FamilyProvisioner $provisioner): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
+        $user = User::factory()->create([
+            'name' => 'Markus',
             'email' => 'test@example.com',
         ]);
+
+        $provisioner->createFor($user, 'Testfamilie');
     }
 }
