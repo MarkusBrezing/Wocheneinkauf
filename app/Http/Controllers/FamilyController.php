@@ -37,7 +37,7 @@ class FamilyController extends Controller
     public function update(Request $request)
     {
         $family = $this->currentFamily($request);
-        $this->erzwingeVerwaltungsrecht($request, $family);
+        $this->requireAdmin($request, $family);
 
         $daten = $request->validate([
             'name' => ['required', 'string', 'max:120'],
@@ -146,20 +146,9 @@ class FamilyController extends Controller
         return back()->with('status', 'Du arbeitest jetzt in '.$ziel->name.'.');
     }
 
-    protected function currentFamily(Request $request): Family
-    {
-        return $request->user()->currentFamily
-            ?? abort(409, 'Für dieses Konto ist keine Familie gesetzt.');
-    }
-
     protected function mitgliedFinden(Family $family, string $publicId): User
     {
         return $family->users()->where('users.public_id', $publicId)->firstOrFail();
-    }
-
-    protected function erzwingeVerwaltungsrecht(Request $request, Family $family): void
-    {
-        abort_unless($request->user()->administers($family), 403);
     }
 
     protected function erzwingeOwner(Request $request, Family $family): void

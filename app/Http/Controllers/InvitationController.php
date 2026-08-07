@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Core\Models\Family;
 use App\Core\Notifications\FamilyInvitation;
 use App\Core\Services\InvitationNotRedeemable;
 use App\Core\Services\InvitationService;
@@ -27,7 +26,7 @@ class InvitationController extends Controller
     public function store(Request $request)
     {
         $family = $this->currentFamily($request);
-        abort_unless($request->user()->administers($family), 403);
+        $this->requireAdmin($request, $family);
 
         $daten = $request->validate([
             'email' => ['nullable', 'email', 'max:190'],
@@ -110,7 +109,7 @@ class InvitationController extends Controller
     public function destroy(Request $request, int $einladung)
     {
         $family = $this->currentFamily($request);
-        abort_unless($request->user()->administers($family), 403);
+        $this->requireAdmin($request, $family);
 
         // Ueber die Beziehung suchen, damit sich keine fremde Einladung
         // widerrufen laesst.
@@ -119,11 +118,5 @@ class InvitationController extends Controller
         $this->invitations->revoke($ziel, $request->user());
 
         return back()->with('status', 'Die Einladung wurde widerrufen.');
-    }
-
-    protected function currentFamily(Request $request): Family
-    {
-        return $request->user()->currentFamily
-            ?? abort(409, 'Für dieses Konto ist keine Familie gesetzt.');
     }
 }

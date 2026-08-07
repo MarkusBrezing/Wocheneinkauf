@@ -30,9 +30,24 @@
         </form>
     @endif
 
-    <h2>Nächster Schritt</h2>
+    <h2>Einkaufen</h2>
+    <p>
+        <a href="{{ route('einkaufsliste.index') }}" class="knopf">Zur Einkaufsliste</a>
+        <a href="{{ route('einkaufsliste.einkaufen') }}" class="knopf knopf-akzent">Einkaufen (Handy)</a>
+        <a href="{{ route('einkaufsliste.neue-woche') }}" class="knopf knopf-schlicht">Neue Woche starten</a>
+    </p>
+
+    <h2>Planen</h2>
+    <p>
+        <a href="{{ route('wochenplan.index') }}" class="knopf knopf-schlicht">Wochenplan</a>
+        <a href="{{ route('rezepte.index') }}" class="knopf knopf-schlicht">Rezepte</a>
+        <a href="{{ route('vorrat.index') }}" class="knopf knopf-schlicht">Vorrat</a>
+        <a href="{{ route('vorrat.inventur.index') }}" class="knopf knopf-schlicht">Inventur</a>
+    </p>
+
+    <h2>Hilfe</h2>
     <p class="gedaempft">
-        Die Einkaufsliste kommt in Schritt 4 der Roadmap. Bis dahin zeigt diese
-        Seite nur, dass Anmeldung und Mandantenkontext stehen.
+        Das <a href="{{ route('handbuch.index') }}">Anwenderhandbuch</a> erklärt jede Seite —
+        für den Anfang reichen die ersten drei Kapitel.
     </p>
 @endsection

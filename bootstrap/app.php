@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Catalog\Console\InstallProductsCommand;
+use App\Modules\Catalog\Console\InstallStarterDataCommand;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // Modulbefehle liegen nicht unter app/Console/Commands und werden deshalb
+    // nicht automatisch gefunden.
+    ->withCommands([
+        InstallStarterDataCommand::class,
+        InstallProductsCommand::class,
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })

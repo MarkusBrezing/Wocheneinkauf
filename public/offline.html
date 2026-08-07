@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kein Netz · Wocheneinkauf</title>
+    <style>
+        :root { color-scheme: light dark; }
+        body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: #FDFBF7; color: #1C1D1B; margin: 0;
+            min-height: 100dvh; display: grid; place-items: center; padding: 1.5rem; }
+        .karte { max-width: 24rem; text-align: center; }
+        h1 { font-size: 1.3rem; }
+        p { color: #6A6B66; }
+        a { display: inline-block; margin-top: 1rem; padding: 0.6rem 1.2rem;
+            background: #457A00; color: #FDFBF7; border-radius: 6px; text-decoration: none; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #1C1D1B; color: #FDFBF7; }
+            p { color: #A8A79F; }
+            a { background: #8CBF3F; color: #1C1D1B; }
+        }
+    </style>
+</head>
+<body>
+    <div class="karte">
+        <h1>Gerade kein Netz</h1>
+        <p>
+            Die zuletzt geöffnete Einkaufsliste bleibt auch ohne Verbindung lesbar.
+            Zum Abhaken braucht es allerdings wieder Empfang.
+        </p>
+        <a href="/einkaufsliste/einkaufen">Nochmal versuchen</a>
+    </div>
+</body>
+</html>

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Core\Support\FamilyContext;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -44,6 +45,14 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return 'Database\\Factories\\'.$module.'\\'.class_basename($modelName).'Factory';
+        });
+
+        // Pflichtangaben in Impressum und Datenschutzerklaerung. Fehlt eine,
+        // steht dort eine sichtbare Luecke statt einer stillen leeren Zeile --
+        // ein unvollstaendiges Impressum ist abmahnfaehig und soll deshalb
+        // beim Draufschauen auffallen.
+        Blade::directive('angabe', function (string $ausdruck) {
+            return "<?php echo \\App\\Core\\Support\\Rechtstext::angabe({$ausdruck}); ?>";
         });
     }
 }

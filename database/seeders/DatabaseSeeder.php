@@ -16,11 +16,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(FamilyProvisioner $provisioner): void
     {
-        $user = User::factory()->create([
-            'name' => 'Markus',
-            'email' => 'test@example.com',
-        ]);
+        if (! User::where('email', 'test@example.com')->exists()) {
+            $user = User::factory()->create([
+                'name' => 'Markus',
+                'email' => 'test@example.com',
+            ]);
 
-        $provisioner->createFor($user, 'Testfamilie');
+            $provisioner->createFor($user, 'Testfamilie');
+        }
+
+        // Eine Familie mit Alltagsdaten: Katalog, Fixartikel, laufende Liste
+        // und Archiv. Laesst sich auch einzeln aufrufen:
+        //   php artisan db:seed --class=DemoDataSeeder
+        $this->call(DemoDataSeeder::class);
     }
 }

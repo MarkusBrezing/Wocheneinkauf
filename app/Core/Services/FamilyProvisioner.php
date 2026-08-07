@@ -5,6 +5,7 @@ namespace App\Core\Services;
 use App\Core\Models\ActivityLog;
 use App\Core\Models\Family;
 use App\Core\Models\User;
+use App\Modules\Catalog\Services\StarterDataInstaller;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\DB;
  */
 class FamilyProvisioner
 {
+    public function __construct(protected StarterDataInstaller $starterData) {}
+
     /**
      * Neue Familie anlegen und den Nutzer als Owner eintragen (A-01).
      */
@@ -28,6 +31,10 @@ class FamilyProvisioner
             ]);
 
             $this->join($user, $family, 'owner');
+
+            // Warengruppen, Stichwortregeln und ein Standardmarkt (B-09) --
+            // sonst steht die neue Familie vor leeren Listen.
+            $this->starterData->install($family);
 
             return $family;
         });
