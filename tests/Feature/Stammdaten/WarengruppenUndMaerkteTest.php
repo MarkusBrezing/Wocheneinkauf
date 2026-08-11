@@ -154,6 +154,82 @@ class WarengruppenUndMaerkteTest extends TestCase
         $this->assertSame(1, $bereich->productGroups()->count());
     }
 
+    /**
+     * Die Pflegemaske schickt Name, Reihenfolge und Zuordnung in einem Zug --
+     * nur so lassen sich Speichern und Löschen an den rechten Rand der Zeile
+     * legen, statt ein zweites Formular mitten hineinzusetzen.
+     */
+    public function test_regalbereich_speichert_name_reihenfolge_und_zuordnung_zusammen(): void
+    {
+        [$owner] = $this->familie();
+        $markt = $this->imKontext($owner, fn () => Market::firstOrFail());
+
+        $this->actingAs($owner)->post('/stammdaten/maerkte/'.$markt->id.'/bereiche', ['name' => 'Weinregal', 'sort' => 95]);
+
+        [$bereich, $gruppen] = $this->imKontext($owner, fn () => [
+            MarketSection::where('name', 'Weinregal')->firstOrFail(),
+            ProductGroup::whereIn('code', ['GETRAENKE', 'SUESS'])->pluck('id'),
+        ]);
+
+        $this->actingAs($owner)
+            ->put('/stammdaten/bereiche/'.$bereich->id, [
+                'name' => 'Getränkeregal',
+                'sort' => 12,
+                'gruppen' => $gruppen->all(),
+            ])
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        $bereich->refresh();
+
+        $this->assertSame('Getränkeregal', $bereich->name);
+        $this->assertSame(12, $bereich->sort);
+        $this->assertSame(2, $bereich->productGroups()->count());
+    }
+
+    /**
+     * Wer nur umbenennt, ohne das Feld gruppen zu schicken, darf die Zuordnung
+     * nicht verlieren -- sonst würde jede Umbenennung sie stillschweigend leeren.
+     */
+    public function test_ohne_das_feld_gruppen_bleibt_die_zuordnung_stehen(): void
+    {
+        [$owner] = $this->familie();
+        $markt = $this->imKontext($owner, fn () => Market::firstOrFail());
+
+        $this->actingAs($owner)->post('/stammdaten/maerkte/'.$markt->id.'/bereiche', ['name' => 'Weinregal', 'sort' => 95]);
+
+        [$bereich, $gruppen] = $this->imKontext($owner, fn () => [
+            MarketSection::where('name', 'Weinregal')->firstOrFail(),
+            ProductGroup::whereIn('code', ['GETRAENKE', 'SUESS'])->pluck('id'),
+        ]);
+
+        $this->actingAs($owner)->put('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', ['gruppen' => $gruppen->all()]);
+        $this->assertSame(2, $bereich->productGroups()->count());
+
+        $this->actingAs($owner)
+            ->put('/stammdaten/bereiche/'.$bereich->id, ['name' => 'Weinregal', 'sort' => 96])
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame(2, $bereich->productGroups()->count());
+    }
+
+    /**
+     * Pflegeseiten laufen auf dem Notebook, nicht auf dem Telefon: Sie fordern
+     * die weite Fassung des Layouts an und legen ihre Handlungen an den rechten
+     * Rand der Zeile.
+     */
+    public function test_die_pflegeseiten_sind_breit_und_haben_die_knopfspalte_rechts(): void
+    {
+        [$owner] = $this->familie();
+
+        foreach (['warengruppen', 'maerkte', 'produkte'] as $seite) {
+            $this->actingAs($owner)->get('/stammdaten/'.$seite)
+                ->assertOk()
+                ->assertSee('<body class="weit">', false)
+                ->assertSee('stammtabelle', false)
+                ->assertSee('knopfspalte', false);
+        }
+    }
+
     public function test_regalbereichsname_ist_je_markt_eindeutig(): void
     {
         [$owner] = $this->familie();

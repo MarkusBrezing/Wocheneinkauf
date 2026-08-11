@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Artikel')
+@section('koerper', 'weit')
 
 @section('inhalt')
     @include('partials.stammdaten-schritte')
@@ -11,32 +12,11 @@
         Einheit unter Einheit und Warengruppe unter Warengruppe steht.
     --}}
     <style>
-        body { max-width: 78rem; }
-
-        .katalog { font-size: 0.9rem; }
-        .katalog th, .katalog td { padding: 0.3rem 0.5rem; vertical-align: middle; }
-        /* Der Kopf bleibt beim Scrollen stehen -- ohne ihn ist ab Zeile 30
-           nicht mehr erkennbar, welche Spalte welche ist. */
-        .katalog thead th {
-            position: sticky; top: 0; z-index: 1;
-            background: var(--flaeche); text-align: left;
-            border-bottom: 2px solid var(--primaer); white-space: nowrap;
-        }
-        /* Wechselnde Zeilen: Bei sechs Spalten und hundert Zeilen ist das
-           der Unterschied zwischen Lesen und Verrutschen. Das Beige der
-           Palette ist dafür hell genug, um die Eingabefelder nicht zu
-           stören. */
-        .katalog tbody tr:nth-child(even) { background: var(--flaeche); }
-        .katalog tbody tr:hover { background: var(--primaer-hell); }
-        .katalog tbody tr:focus-within { background: var(--primaer-hell); }
-        .katalog input[type=text], .katalog select { margin: 0; padding: 0.25rem 0.4rem; width: 100%;
-            background: var(--hintergrund); }
-        .katalog input[type=checkbox], .katalog input[type=radio] { width: auto; margin: 0;
-            accent-color: var(--primaer); }
+        /* Breite, Zebrastreifen, klebender Kopf und die Knopfspalte am rechten
+           Rand kommen aus .stammtabelle im Layout -- hier steht nur, was den
+           Artikelkatalog von Warengruppen und Märkten unterscheidet. */
         .katalog .schmal { width: 6rem; }
         .katalog .mittel { width: 11rem; }
-        .katalog .knopfspalte { white-space: nowrap; width: 1%; }
-        .katalog button { margin: 0; padding: 0.2rem 0.55rem; font-size: 0.85rem; }
         /* Der Grundvorrat ist eine Eigenschaft, keine Handlung -- deshalb
            trägt die Spalte den warmen Akzent statt des Handlungsgrüns. */
         .katalog .vorrat-an { accent-color: var(--akzent); }
@@ -114,7 +94,7 @@
     </p>
 
     <div class="tabellenrahmen">
-        <table class="katalog">
+        <table class="stammtabelle katalog">
             <thead>
                 <tr>
                     <th>Name</th>

@@ -184,6 +184,46 @@
          * beantwortet die Frage, in welcher Reihenfolge man vorgeht -- bevor
          * jemand Artikel anlegt, für die es noch keine Warengruppe gibt.
          */
+        /*
+         * Standardbreite sind 46rem -- Fliesstext liest sich in dieser Breite
+         * am besten. Pflegeseiten mit breiten Tabellen fordern die weite
+         * Fassung an (@section('koerper', 'weit')): 82rem entsprechen rund
+         * 1310 Pixeln und passen damit noch auf ein 1366er Notebook, ohne auf
+         * einem 1920er Bildschirm verloren zu wirken.
+         */
+        body.weit { max-width: 82rem; }
+
+        /*
+         * Der gemeinsame Tabellenstil der Stammdatenpflege. Er steht hier und
+         * nicht dreimal in den Seiten, damit Artikel, Warengruppen und Märkte
+         * nicht mit der Zeit auseinanderlaufen.
+         */
+        .stammtabelle { font-size: 0.9rem; }
+        .stammtabelle th, .stammtabelle td { padding: 0.3rem 0.5rem; vertical-align: middle; }
+        /* Der Kopf bleibt beim Scrollen stehen -- ohne ihn ist ab Zeile 30
+           nicht mehr erkennbar, welche Spalte welche ist. */
+        .stammtabelle thead th { position: sticky; top: 0; z-index: 1;
+            background: var(--flaeche); text-align: left;
+            border-bottom: 2px solid var(--primaer); white-space: nowrap; }
+        /* Wechselnde Zeilen: Bei vielen Spalten und vielen Zeilen ist das der
+           Unterschied zwischen Lesen und Verrutschen. */
+        .stammtabelle tbody tr:nth-child(even) { background: var(--flaeche); }
+        .stammtabelle tbody tr:hover,
+        .stammtabelle tbody tr:focus-within { background: var(--primaer-hell); }
+        .stammtabelle input[type=text], .stammtabelle input[type=number],
+        .stammtabelle select { margin: 0; padding: 0.25rem 0.4rem; width: 100%;
+            background: var(--hintergrund); }
+        .stammtabelle input[type=checkbox], .stammtabelle input[type=radio] { width: auto; margin: 0;
+            accent-color: var(--primaer); }
+        .stammtabelle button { margin: 0; padding: 0.2rem 0.55rem; font-size: 0.85rem; }
+        /* Speichern und Löschen ganz rechts, in einer eigenen Spalte: Die
+           Zeile liest sich von links nach rechts, und am Ende steht, was man
+           mit ihr tun kann. width:1% zwingt die Spalte auf Inhaltsbreite --
+           den Platz bekommen die Daten. */
+        .stammtabelle .knopfspalte { white-space: nowrap; width: 1%; text-align: right; }
+        .stammtabelle .knopfspalte button + button { margin-left: 0.3rem; }
+        .stammtabelle .zahl { width: 6rem; }
+
         .pflegeschritte { margin: 0 0 1.5rem; }
         .pflegeschritte ol { display: flex; gap: 0.4rem; flex-wrap: wrap;
             list-style: none; margin: 0; padding: 0; align-items: center; }
@@ -216,7 +256,7 @@
         @media print { .fusszeile { display: none; } }
     </style>
 </head>
-<body>
+<body class="@yield('koerper')">
     @auth
         @include('partials.navigation')
 

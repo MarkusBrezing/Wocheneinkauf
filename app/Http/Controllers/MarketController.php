@@ -150,9 +150,20 @@ class MarketController extends Controller
             'name' => ['required', 'string', 'max:120',
                 Rule::unique('market_sections')->where('market_id', $bereich->market_id)->ignore($bereich)],
             'sort' => ['required', 'integer', 'between:0,65535'],
+            'gruppen' => ['array'],
+            'gruppen.*' => ['integer'],
         ]);
 
-        $bereich->update($daten);
+        $bereich->update(['name' => $daten['name'], 'sort' => $daten['sort']]);
+
+        // Die Zuordnung darf mitkommen, muss aber nicht. So braucht eine
+        // Tabellenzeile nur ein Formular -- und Speichern und Loeschen koennen
+        // beisammen am rechten Rand stehen, statt sich ueber die Zeile zu
+        // verteilen. Wer nur umbenennt (etwa ueber die Schnittstelle), schickt
+        // kein Feld gruppen und aendert die Zuordnung dadurch nicht.
+        if ($request->has('gruppen')) {
+            $this->zuordnungSpeichern($bereich, $request->input('gruppen', []));
+        }
 
         return back()->with('status', 'Regalbereich gespeichert.');
     }
@@ -180,17 +191,28 @@ class MarketController extends Controller
             'gruppen.*' => ['integer'],
         ]);
 
-        // Bewusst ueber den Global Scope nachgeladen statt den Eingabewerten
-        // zu vertrauen: so kann niemand per manipuliertem Formular eine
-        // Warengruppe einer fremden Familie unterschieben. Die Verbund-
-        // Fremdschluessel wuerden das zwar ohnehin abweisen (R-03), aber mit
-        // einem Datenbankfehler statt einer sauberen Antwort.
-        $ids = ProductGroup::whereIn('id', $request->input('gruppen', []))->pluck('id');
+        $this->zuordnungSpeichern($bereich, $request->input('gruppen', []));
+
+        return back()->with('status', 'Zuordnung gespeichert.');
+    }
+
+    /**
+     * Warengruppen einem Regalbereich zuordnen.
+     *
+     * Die IDs werden ueber den Global Scope nachgeladen statt den
+     * Eingabewerten zu vertrauen: So kann niemand per manipuliertem Formular
+     * eine Warengruppe einer fremden Familie unterschieben. Die Verbund-
+     * Fremdschluessel wuerden das zwar ohnehin abweisen (R-03), aber mit einem
+     * Datenbankfehler statt einer sauberen Antwort.
+     *
+     * @param  array<int, mixed>  $gruppen
+     */
+    protected function zuordnungSpeichern(MarketSection $bereich, array $gruppen): void
+    {
+        $ids = ProductGroup::whereIn('id', $gruppen)->pluck('id');
 
         $bereich->productGroups()->sync(
             $ids->mapWithKeys(fn ($id) => [$id => ['family_id' => $bereich->family_id]])->all()
         );
-
-        return back()->with('status', 'Zuordnung gespeichert.');
     }
 }
