@@ -44,3 +44,15 @@ Die Regeln haben eine Rangfolge, und die ist wichtig:
 - **Umlautvarianten** zählen zusammen: „Äpfel" und „aepfel" sind derselbe Artikel.
 
 Wenn ein Artikel dauerhaft falsch einsortiert wird, ändern Sie am Artikel selbst die Warengruppe — das gilt dann immer. Eine Regel anzupassen lohnt erst, wenn eine ganze Sorte betroffen ist.
+
+## Alles zurücksetzen
+
+Wenn der Startdatensatz nicht zu Ihrer Familie passt und Einzelnes wegzuklicken länger dauert als neu anzufangen: **Stammdaten zurücksetzen** am Fuß der Artikel-, Warengruppen- und Märkteseite löscht Artikel, Warengruppen und Märkte auf einmal.
+
+Vorher zeigt eine eigene Seite, was verschwindet — in drei Spalten: was gelöscht wird, was mit verschwindet, und was bleibt, aber seine Verweise verliert. Erst wenn Sie den **Namen der Familie abtippen**, lässt sich der Knopf drücken.
+
+> **Der Vorrat geht mit.** Vorratspositionen hängen an Artikeln; mit den Artikeln verschwinden sie samt ihren Buchungen. Einkaufslisten und Rezepte bleiben dagegen erhalten — ihre Einträge behalten Text und Menge, stehen aber danach unter „Ohne Warengruppe".
+
+Ein Haken auf der Seite spielt den Startdatensatz gleich wieder ein: 15 Warengruppen, rund 90 Stichwortregeln und den Markt „Supermarkt" mit 10 Regalbereichen. Ohne ihn stünden Sie vor einer Anwendung ohne jede Gliederung.
+
+Zurücksetzen dürfen nur Inhaber und Administratoren — wie alles, was für die ganze Familie gilt.

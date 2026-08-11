@@ -10,6 +10,7 @@ use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListTemplateController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\MarketController;
+use App\Http\Controllers\MasterDataPurgeController;
 use App\Http\Controllers\MealPlanController;
 use App\Http\Controllers\NewWeekController;
 use App\Http\Controllers\PantryController;
@@ -277,6 +278,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/produkte/{produkt}', [ProductController::class, 'update'])->name('produkte.update');
         Route::delete('/produkte/{produkt}', [ProductController::class, 'destroy'])->name('produkte.destroy');
         Route::post('/produkte/zusammenfuehren', [ProductController::class, 'merge'])->name('produkte.merge');
+
+        /*
+         * Stammdaten zuruecksetzen: Artikel, Warengruppen und Maerkte auf
+         * einmal loeschen. Zwei Routen statt einer -- die Sicherheitsabfrage
+         * ist eine eigene Seite und kein Bestaetigungsfenster.
+         */
+        Route::get('/zuruecksetzen', [MasterDataPurgeController::class, 'show'])->name('zuruecksetzen');
+        Route::delete('/zuruecksetzen', [MasterDataPurgeController::class, 'destroy'])->name('zuruecksetzen.destroy');
 
     });
 

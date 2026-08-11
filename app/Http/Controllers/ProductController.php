@@ -65,6 +65,8 @@ class ProductController extends Controller
             'nurVorrat' => $nurVorrat,
             'nurEingeschraenkt' => $nurEingeschraenkt,
             'gesamt' => Product::count(),
+            // Nur wer die Familie verwaltet, sieht den Weg zum Zuruecksetzen.
+            'darfVerwalten' => $request->user()->administers($request->user()->currentFamily),
         ]);
     }
 

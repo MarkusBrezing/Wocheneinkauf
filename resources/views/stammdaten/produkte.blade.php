@@ -279,4 +279,15 @@
 
         <button type="submit" style="margin:0">Zusammenführen</button>
     </form>
+
+    @if ($darfVerwalten)
+        {{-- Ganz unten und schmucklos: Wer hier hinklickt, sucht es. --}}
+        <h2>Stammdaten zurücksetzen</h2>
+        <p class="gedaempft">
+            Artikel, Warengruppen und Märkte auf einmal löschen — für den Fall, dass der
+            Startdatensatz nicht passt und Einzelnes wegzuklicken länger dauert als neu
+            anzufangen. Die nächste Seite zeigt zuerst, was dabei verschwindet.
+        </p>
+        <p><a href="{{ route('stammdaten.zuruecksetzen') }}" class="knopf knopf-schlicht">Stammdaten zurücksetzen …</a></p>
+    @endif
 @endsection

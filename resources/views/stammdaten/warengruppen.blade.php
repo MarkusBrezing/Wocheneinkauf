@@ -74,4 +74,11 @@
     @else
         <p class="gedaempft">Warengruppen darf nur ändern, wer die Familie verwaltet.</p>
     @endif
+
+    @if ($darfVerwalten)
+        <p class="gedaempft" style="margin-top:2.5rem">
+            Alle Stammdaten auf einmal loswerden — Artikel, Warengruppen und Märkte:
+            <a href="{{ route('stammdaten.zuruecksetzen') }}">Stammdaten zurücksetzen</a>.
+        </p>
+    @endif
 @endsection
