@@ -6,6 +6,7 @@ use App\Modules\Catalog\Models\ProductGroup;
 use App\Modules\Markets\Models\Market;
 use App\Modules\Markets\Models\MarketSection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -23,9 +24,25 @@ class MarketController extends Controller
     {
         $family = $this->currentFamily($request);
 
+        $maerkte = Market::with('sections.productGroups')->orderBy('sort')->orderBy('name')->get();
+        $gruppen = ProductGroup::orderBy('sort')->orderBy('label')->get();
+
         return view('stammdaten.maerkte', [
-            'maerkte' => Market::with('sections.productGroups')->orderBy('sort')->orderBy('name')->get(),
-            'gruppen' => ProductGroup::orderBy('sort')->orderBy('label')->get(),
+            'maerkte' => $maerkte,
+            'gruppen' => $gruppen,
+            /*
+             * Je Markt die Warengruppen, die dort noch in keinem Regal liegen.
+             * Nur sie stehen im Auswahlfeld -- eine Warengruppe gehoert je
+             * Markt in genau ein Regal, und was schon liegt, soll gar nicht
+             * erst zur Wahl stehen.
+             */
+            'freieGruppen' => $maerkte->mapWithKeys(function (Market $markt) use ($gruppen) {
+                $belegt = $markt->sections->flatMap(
+                    fn (MarketSection $b) => $b->productGroups->modelKeys()
+                )->all();
+
+                return [$markt->getKey() => $gruppen->whereNotIn('id', $belegt)->values()];
+            }),
             'darfVerwalten' => $request->user()->administers($family),
         ]);
     }
@@ -150,27 +167,13 @@ class MarketController extends Controller
             'name' => ['required', 'string', 'max:120',
                 Rule::unique('market_sections')->where('market_id', $bereich->market_id)->ignore($bereich)],
             'sort' => ['required', 'integer', 'between:0,65535'],
-            'gruppen' => ['array'],
-            'gruppen.*' => ['integer'],
-            'zuordnung' => ['nullable', 'boolean'],
         ]);
 
-        $bereich->update(['name' => $daten['name'], 'sort' => $daten['sort']]);
-
-        /*
-         * Die Zuordnung darf mitkommen, muss aber nicht -- so braucht eine
-         * Tabellenzeile nur ein Formular, und Speichern und Loeschen koennen
-         * beisammen am rechten Rand stehen.
-         *
-         * Ob sie gemeint ist, sagt das Merkmal "zuordnung" und nicht die
-         * Anwesenheit von "gruppen": Eine Mehrfachauswahl, in der nichts
-         * markiert ist, sendet ueberhaupt kein Feld. Am Feld selbst haengte
-         * die Entscheidung, waere "alles abwaehlen und speichern" wirkungslos
-         * -- und die letzte Warengruppe liesse sich nie mehr entfernen.
-         */
-        if ($request->boolean('zuordnung')) {
-            $this->zuordnungSpeichern($bereich, $request->input('gruppen', []));
-        }
+        // Nur Name und Reihenfolge. Die Zuordnung der Warengruppen laeuft
+        // seither ueber attachGroup und detachGroup -- eine Warengruppe nach
+        // der anderen, statt einer Mehrfachauswahl, die alles auf einmal
+        // ueberschreibt.
+        $bereich->update($daten);
 
         return back()->with('status', 'Regalbereich gespeichert.');
     }
@@ -186,40 +189,90 @@ class MarketController extends Controller
     }
 
     /**
-     * Warengruppen einem Regalbereich zuordnen (B-04).
+     * Eine einzelne Warengruppe einem Regalbereich zuordnen (B-04).
+     *
+     * Zur Auswahl steht nur, was in diesem Markt noch nirgends liegt. Das ist
+     * keine Bequemlichkeit, sondern die Regel selbst: Eine Warengruppe gehoert
+     * je Markt in genau ein Regal. Die fruehere Mehrfachauswahl liess den
+     * Widerspruch zu, und die Sortierung musste ihn hinterher aufloesen ("der
+     * erste Bereich in Laufreihenfolge gewinnt"). Jetzt kann er gar nicht mehr
+     * entstehen.
      */
-    public function syncGroups(Request $request, MarketSection $bereich)
+    public function attachGroup(Request $request, MarketSection $bereich)
     {
         $family = $this->currentFamily($request);
         $this->requireAdmin($request, $family);
 
-        $request->validate([
-            'gruppen' => ['array'],
-            'gruppen.*' => ['integer'],
-        ]);
+        $request->validate(['product_group_id' => ['required', 'integer']]);
 
-        $this->zuordnungSpeichern($bereich, $request->input('gruppen', []));
+        $gruppe = $this->warengruppe($request);
+        $belegt = $this->belegteGruppen($bereich->market_id);
 
-        return back()->with('status', 'Zuordnung gespeichert.');
+        // Der Fall tritt im Formular nicht auf -- dort steht Belegtes gar nicht
+        // zur Wahl. Zwei offene Browserfenster reichen aber, damit er doch
+        // eintritt, und dann ist eine Meldung besser als ein zweiter Eintrag.
+        if ($belegt->has($gruppe->getKey())) {
+            throw ValidationException::withMessages([
+                'product_group_id' => $gruppe->label.' liegt in diesem Markt schon im Regalbereich „'
+                    .$belegt->get($gruppe->getKey()).'“.',
+            ]);
+        }
+
+        $bereich->productGroups()->attach($gruppe->getKey(), ['family_id' => $bereich->family_id]);
+
+        return back()->with('status', $gruppe->label.' liegt jetzt im Bereich „'.$bereich->name.'“.');
     }
 
     /**
-     * Warengruppen einem Regalbereich zuordnen.
-     *
-     * Die IDs werden ueber den Global Scope nachgeladen statt den
-     * Eingabewerten zu vertrauen: So kann niemand per manipuliertem Formular
-     * eine Warengruppe einer fremden Familie unterschieben. Die Verbund-
-     * Fremdschluessel wuerden das zwar ohnehin abweisen (R-03), aber mit einem
-     * Datenbankfehler statt einer sauberen Antwort.
-     *
-     * @param  array<int, mixed>  $gruppen
+     * Eine einzelne Warengruppe wieder herausnehmen -- der Gegenweg zum
+     * Zuordnen, mit demselben Zuschnitt. Danach steht sie in diesem Markt
+     * wieder zur Auswahl.
      */
-    protected function zuordnungSpeichern(MarketSection $bereich, array $gruppen): void
+    public function detachGroup(Request $request, MarketSection $bereich)
     {
-        $ids = ProductGroup::whereIn('id', $gruppen)->pluck('id');
+        $family = $this->currentFamily($request);
+        $this->requireAdmin($request, $family);
 
-        $bereich->productGroups()->sync(
-            $ids->mapWithKeys(fn ($id) => [$id => ['family_id' => $bereich->family_id]])->all()
-        );
+        $request->validate(['product_group_id' => ['required', 'integer']]);
+
+        $gruppe = $this->warengruppe($request);
+
+        $bereich->productGroups()->detach($gruppe->getKey());
+
+        return back()->with('status', $gruppe->label.' liegt nicht mehr im Bereich „'.$bereich->name.'“.');
+    }
+
+    /**
+     * Die Warengruppe aus der Anfrage -- ueber den Global Scope nachgeladen
+     * statt der Eingabe vertraut.
+     *
+     * So trifft eine untergeschobene fremde ID ins Leere (404), statt spaeter
+     * am Verbund-Fremdschluessel mit einem Datenbankfehler zu scheitern.
+     */
+    protected function warengruppe(Request $request): ProductGroup
+    {
+        return ProductGroup::whereKey($request->integer('product_group_id'))->firstOrFail();
+    }
+
+    /**
+     * Welche Warengruppen in diesem Markt schon in einem Regal liegen.
+     *
+     * @return Collection<int, string> Warengruppen-ID => Name des Bereichs
+     */
+    protected function belegteGruppen(int $marktId): Collection
+    {
+        // Bewusst put() in einer Schleife statt flatMap(): flatMap wirft die
+        // Schluessel weg, und genau die sind hier der Inhalt -- die Zuordnung
+        // Warengruppe => Regalbereich.
+        return MarketSection::where('market_id', $marktId)
+            ->with('productGroups')
+            ->get()
+            ->reduce(function (Collection $belegt, MarketSection $bereich) {
+                foreach ($bereich->productGroups as $gruppe) {
+                    $belegt->put($gruppe->getKey(), $bereich->name);
+                }
+
+                return $belegt;
+            }, collect());
     }
 }

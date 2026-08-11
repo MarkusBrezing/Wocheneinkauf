@@ -18,23 +18,17 @@ Ein Markt ist **Standard** — er wird für neue Listen vorgeschlagen. Ein still
 
 ## Warengruppen einem Bereich zuordnen
 
-In der Tabelle des Marktes hat jeder Regalbereich eine eigene Zeile. Die dritte Spalte — **„Warengruppen, die hier liegen"** — ist ein Auswahlfeld mit mehreren Zeilen. Darin markieren Sie alles, was in diesem Bereich steht:
+In der Tabelle des Marktes hat jeder Regalbereich eine eigene Zeile. Die dritte Spalte zeigt, welche Warengruppen dort liegen — jede als kleine Marke mit einem **×**.
 
-| Was Sie wollen | Wie |
-|---|---|
-| Eine Warengruppe wählen | anklicken |
-| Eine weitere dazunehmen | **Strg** gedrückt halten und anklicken (am Mac: **Cmd**) |
-| Einen ganzen Block | erste anklicken, **Umschalt** halten, letzte anklicken |
-| Eine wieder herausnehmen | **Strg** halten und erneut anklicken |
-| Alle herausnehmen | Strg-Klick, bis nichts mehr markiert ist |
+**Hinzufügen:** Im Auswahlfeld darunter eine Warengruppe wählen, dann **Zuordnen**. Eine nach der anderen.
 
-Danach **Speichern** am rechten Rand derselben Zeile. Dieser eine Knopf sichert Reihenfolge, Name *und* Zuordnung — es gibt kein zweites Speichern für die Auswahl.
+**Herausnehmen:** Auf das **×** an der Marke klicken. Danach steht die Warengruppe in diesem Markt wieder zur Auswahl.
 
-> Das Feld zeigt vier Zeilen auf einmal; bei fünfzehn Warengruppen wird darin gescrollt. Was markiert ist, bleibt beim Scrollen markiert, auch wenn Sie es gerade nicht sehen.
+> **Zur Wahl steht nur, was in diesem Markt noch nirgends liegt.** Eine Warengruppe gehört je Markt in genau ein Regal — sonst wüsste die Einkaufsliste nicht, wo sie den Artikel hinschreiben soll.
 
-Dieselbe Warengruppe darf in verschiedenen Märkten in verschiedenen Bereichen liegen. Im Supermarkt sind die Getränke ganz hinten, im Discounter gleich am Eingang — genau dafür ist die Zuordnung je Markt da.
+Daraus folgt etwas, das anfangs verwirrt: Im mitgelieferten Markt „Supermarkt" liegen bereits **alle 15 Warengruppen** in einem Bereich. Bei einem neuen Regalbereich erscheint deshalb zunächst gar kein Auswahlfeld. Nehmen Sie die Warengruppe erst dort heraus, wo sie bisher liegt — dann steht sie zur Verfügung.
 
-Liegt eine Warengruppe versehentlich in **zwei** Bereichen desselben Marktes, gewinnt der erste in Laufreihenfolge. Die Anwendung entscheidet sich also, statt den Artikel doppelt aufzuführen.
+Dieselbe Warengruppe darf in verschiedenen **Märkten** an verschiedenen Stellen liegen. Im Supermarkt sind die Getränke ganz hinten, im Discounter gleich am Eingang — genau dafür ist die Zuordnung je Markt da.
 
 Warengruppen ohne Zuordnung landen in einem Sammelabschnitt „Ohne Regalbereich" am Ende der Liste. Das ist kein Fehler, sondern eine Erinnerung.
 

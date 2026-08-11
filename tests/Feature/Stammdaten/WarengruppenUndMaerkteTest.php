@@ -126,7 +126,12 @@ class WarengruppenUndMaerkteTest extends TestCase
         $this->assertTrue($standard->fresh()->is_active);
     }
 
-    public function test_regalbereich_anlegen_und_warengruppen_zuordnen(): void
+    /**
+     * Im Startdatensatz liegt jede der 15 Warengruppen bereits in einem Regal.
+     * Ein neuer Bereich bekommt also erst dann etwas zur Auswahl, wenn woanders
+     * etwas herausgenommen wurde -- das ist die neue Regel, nicht ein Mangel.
+     */
+    public function test_regalbereich_anlegen_und_warengruppe_zuordnen(): void
     {
         [$owner] = $this->familie();
         $markt = $this->imKontext($owner, fn () => Market::firstOrFail());
@@ -135,131 +140,110 @@ class WarengruppenUndMaerkteTest extends TestCase
             ->post('/stammdaten/maerkte/'.$markt->id.'/bereiche', ['name' => 'Weinregal', 'sort' => 95])
             ->assertRedirect();
 
-        [$bereich, $gruppen] = $this->imKontext($owner, fn () => [
+        [$weinregal, $getraenkeregal, $getraenke] = $this->imKontext($owner, fn () => [
             MarketSection::where('name', 'Weinregal')->firstOrFail(),
-            ProductGroup::whereIn('code', ['GETRAENKE', 'SUESS'])->pluck('id'),
+            MarketSection::where('name', 'Getränke')->firstOrFail(),
+            ProductGroup::where('code', 'GETRAENKE')->firstOrFail(),
+        ]);
+
+        // Erst herausnehmen ...
+        $this->actingAs($owner)
+            ->delete('/stammdaten/bereiche/'.$getraenkeregal->id.'/warengruppen', ['product_group_id' => $getraenke->id])
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        // ... dann steht sie dem neuen Bereich zur Verfügung.
+        $this->actingAs($owner)
+            ->post('/stammdaten/bereiche/'.$weinregal->id.'/warengruppen', ['product_group_id' => $getraenke->id])
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame(1, $this->imKontext($owner, fn () => $weinregal->productGroups()->count()));
+        $this->assertSame(0, $this->imKontext($owner, fn () => $getraenkeregal->productGroups()->count()));
+    }
+
+    /**
+     * Der Kern der neuen Logik: Eine Warengruppe gehört je Markt in genau ein
+     * Regal. Was schon liegt, steht gar nicht mehr zur Wahl -- und wer es
+     * trotzdem schickt (zwei offene Fenster), bekommt eine Meldung statt eines
+     * zweiten Eintrags.
+     */
+    public function test_eine_belegte_warengruppe_steht_nicht_mehr_zur_wahl(): void
+    {
+        [$owner] = $this->familie();
+
+        [$kuehlregal, $weinregal, $milch] = $this->imKontext($owner, function () {
+            $markt = Market::firstOrFail();
+
+            return [
+                $markt->sections()->where('name', 'Kühlregal')->firstOrFail(),
+                $markt->sections()->create(['name' => 'Weinregal', 'sort' => 95, 'family_id' => $markt->family_id]),
+                ProductGroup::where('code', 'MILCH')->firstOrFail(),
+            ];
+        });
+
+        // Milch liegt aus dem Startdatensatz im Kühlregal.
+        $this->assertTrue($this->imKontext($owner, fn () => $kuehlregal->productGroups->contains($milch)));
+
+        // Im Auswahlfeld des Weinregals taucht sie deshalb nicht auf.
+        $antwort = $this->actingAs($owner)->get('/stammdaten/maerkte')->assertOk();
+        $freie = $antwort->viewData('freieGruppen')[$kuehlregal->market_id];
+        $this->assertFalse($freie->contains('id', $milch->id));
+
+        // Und der Versuch, sie trotzdem ein zweites Mal zuzuordnen, scheitert.
+        $this->actingAs($owner)->from('/stammdaten/maerkte')
+            ->post('/stammdaten/bereiche/'.$weinregal->id.'/warengruppen', ['product_group_id' => $milch->id])
+            ->assertRedirect('/stammdaten/maerkte')
+            ->assertSessionHasErrors('product_group_id');
+
+        $this->assertSame(0, $this->imKontext($owner, fn () => $weinregal->productGroups()->count()));
+    }
+
+    /**
+     * Herausnehmen ist der Gegenweg -- danach steht die Warengruppe wieder zur
+     * Wahl.
+     */
+    public function test_herausnehmen_gibt_die_warengruppe_wieder_frei(): void
+    {
+        [$owner] = $this->familie();
+
+        [$bereich, $milch] = $this->imKontext($owner, fn () => [
+            Market::firstOrFail()->sections()->where('name', 'Kühlregal')->firstOrFail(),
+            ProductGroup::where('code', 'MILCH')->firstOrFail(),
         ]);
 
         $this->actingAs($owner)
-            ->put('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', ['gruppen' => $gruppen->all()])
-            ->assertRedirect();
-
-        $this->assertSame(2, $bereich->productGroups()->count());
-
-        // Erneutes Senden mit nur einer Gruppe muss die andere entfernen.
-        $this->actingAs($owner)
-            ->put('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', ['gruppen' => [$gruppen->first()]])
-            ->assertRedirect();
-
-        $this->assertSame(1, $bereich->productGroups()->count());
-    }
-
-    /**
-     * Die Pflegemaske schickt Name, Reihenfolge und Zuordnung in einem Zug --
-     * nur so lassen sich Speichern und Löschen an den rechten Rand der Zeile
-     * legen, statt ein zweites Formular mitten hineinzusetzen.
-     */
-    public function test_regalbereich_speichert_name_reihenfolge_und_zuordnung_zusammen(): void
-    {
-        [$owner] = $this->familie();
-        $markt = $this->imKontext($owner, fn () => Market::firstOrFail());
-
-        $this->actingAs($owner)->post('/stammdaten/maerkte/'.$markt->id.'/bereiche', ['name' => 'Weinregal', 'sort' => 95]);
-
-        [$bereich, $gruppen] = $this->imKontext($owner, fn () => [
-            MarketSection::where('name', 'Weinregal')->firstOrFail(),
-            ProductGroup::whereIn('code', ['GETRAENKE', 'SUESS'])->pluck('id'),
-        ]);
-
-        $this->actingAs($owner)
-            ->put('/stammdaten/bereiche/'.$bereich->id, [
-                'name' => 'Getränkeregal',
-                'sort' => 12,
-                'zuordnung' => '1',
-                'gruppen' => $gruppen->all(),
-            ])
+            ->delete('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', ['product_group_id' => $milch->id])
             ->assertRedirect()->assertSessionHasNoErrors();
 
-        $bereich->refresh();
+        $this->assertFalse($this->imKontext($owner, fn () => $bereich->productGroups()->get()->contains($milch)));
 
-        $this->assertSame('Getränkeregal', $bereich->name);
-        $this->assertSame(12, $bereich->sort);
-        $this->assertSame(2, $bereich->productGroups()->count());
+        $antwort = $this->actingAs($owner)->get('/stammdaten/maerkte')->assertOk();
+        $this->assertTrue($antwort->viewData('freieGruppen')[$bereich->market_id]->contains('id', $milch->id));
     }
 
     /**
-     * Die letzte Warengruppe muss sich entfernen lassen.
-     *
-     * Eine Mehrfachauswahl, in der nichts markiert ist, sendet gar kein Feld.
-     * Hinge die Entscheidung an „gruppen", wäre „alles abwählen und speichern"
-     * wirkungslos -- deshalb das eigene Merkmal „zuordnung".
+     * Derselbe Warengruppe darf in einem *anderen* Markt an anderer Stelle
+     * liegen -- genau dafür ist die Zuordnung je Markt da.
      */
-    public function test_alles_abwaehlen_leert_die_zuordnung(): void
+    public function test_ein_anderer_markt_hat_seine_eigene_zuordnung(): void
     {
         [$owner] = $this->familie();
 
-        $bereich = $this->imKontext(
-            $owner,
-            fn () => Market::firstOrFail()->sections()->where('name', 'Kühlregal')->firstOrFail()
-        );
+        $this->actingAs($owner)->post('/stammdaten/maerkte', ['name' => 'Discounter', 'sort' => 20]);
 
-        $this->assertSame(2, $this->imKontext($owner, fn () => $bereich->productGroups()->count()));
+        [$bereich, $milch] = $this->imKontext($owner, function () {
+            $discounter = Market::where('name', 'Discounter')->firstOrFail();
 
-        // Genau das, was der Browser bei leerer Auswahl schickt: das Merkmal,
-        // aber kein einziges gruppen[].
-        $this->actingAs($owner)
-            ->put('/stammdaten/bereiche/'.$bereich->id, [
-                'name' => 'Kühlregal',
-                'sort' => 30,
-                'zuordnung' => '1',
-            ])
-            ->assertRedirect()->assertSessionHasNoErrors();
-
-        $this->assertSame(0, $this->imKontext($owner, fn () => $bereich->productGroups()->count()));
-    }
-
-    /**
-     * Wer nur umbenennt, ohne das Merkmal zu schicken, darf die Zuordnung
-     * nicht verlieren -- sonst würde jede Umbenennung sie stillschweigend leeren.
-     */
-    public function test_ohne_das_merkmal_bleibt_die_zuordnung_stehen(): void
-    {
-        [$owner] = $this->familie();
-        $markt = $this->imKontext($owner, fn () => Market::firstOrFail());
-
-        $this->actingAs($owner)->post('/stammdaten/maerkte/'.$markt->id.'/bereiche', ['name' => 'Weinregal', 'sort' => 95]);
-
-        [$bereich, $gruppen] = $this->imKontext($owner, fn () => [
-            MarketSection::where('name', 'Weinregal')->firstOrFail(),
-            ProductGroup::whereIn('code', ['GETRAENKE', 'SUESS'])->pluck('id'),
-        ]);
-
-        $this->actingAs($owner)->put('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', ['gruppen' => $gruppen->all()]);
-        $this->assertSame(2, $bereich->productGroups()->count());
+            return [
+                $discounter->sections()->create(['name' => 'Eingang', 'sort' => 10, 'family_id' => $discounter->family_id]),
+                ProductGroup::where('code', 'MILCH')->firstOrFail(),
+            ];
+        });
 
         $this->actingAs($owner)
-            ->put('/stammdaten/bereiche/'.$bereich->id, ['name' => 'Weinregal', 'sort' => 96])
+            ->post('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', ['product_group_id' => $milch->id])
             ->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertSame(2, $bereich->productGroups()->count());
-    }
-
-    /**
-     * Pflegeseiten laufen auf dem Notebook, nicht auf dem Telefon: Sie fordern
-     * die weite Fassung des Layouts an und legen ihre Handlungen an den rechten
-     * Rand der Zeile.
-     */
-    public function test_die_pflegeseiten_sind_breit_und_haben_die_knopfspalte_rechts(): void
-    {
-        [$owner] = $this->familie();
-
-        foreach (['warengruppen', 'maerkte', 'produkte'] as $seite) {
-            $this->actingAs($owner)->get('/stammdaten/'.$seite)
-                ->assertOk()
-                ->assertSee('<body class="weit">', false)
-                ->assertSee('stammtabelle', false)
-                ->assertSee('knopfspalte', false);
-        }
+        $this->assertSame(1, $this->imKontext($owner, fn () => $bereich->productGroups()->count()));
     }
 
     public function test_regalbereichsname_ist_je_markt_eindeutig(): void

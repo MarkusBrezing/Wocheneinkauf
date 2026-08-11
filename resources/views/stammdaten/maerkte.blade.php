@@ -18,8 +18,16 @@
         .marktkopf .handlungen { margin-left: auto; display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .marktkopf button { margin: 0; padding: 0.25rem 0.6rem; font-size: 0.85rem; }
 
-        /* Die Mehrfachauswahl darf nicht die halbe Zeile fressen. */
-        .bereiche select[multiple] { min-width: 14rem; }
+        /* Zugeordnete Warengruppen als Marken mit Kreuz. */
+        .zuordnung .marke { display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.1rem 0.2rem 0.1rem 0.5rem; margin: 0.1rem 0.2rem 0.1rem 0;
+            border: 1px solid var(--primaer); border-radius: 999px;
+            background: var(--primaer-hell); font-size: 0.85rem; white-space: nowrap; }
+        .zuordnung .marke button { border: none; background: none; color: var(--gedaempft);
+            font-size: 1rem; line-height: 1; padding: 0 0.25rem; cursor: pointer; }
+        .zuordnung .marke button:hover { color: var(--akzent); background: none; filter: none; }
+        .zuordnung .dazu { display: flex; gap: 0.3rem; margin-top: 0.35rem; }
+        .zuordnung .dazu select { width: auto; min-width: 11rem; }
     </style>
 
     <h1>Märkte</h1>
@@ -95,23 +103,40 @@
                                     <input form="{{ $f }}" name="name" type="text" value="{{ $bereich->name }}"
                                            required aria-label="Name des Regalbereichs">
                                 </td>
-                                <td>
-                                    {{-- Die Zuordnung gehört zum selben Formular wie Name
-                                         und Reihenfolge -- ein Speichern für die ganze
-                                         Zeile statt zwei nebeneinander.
+                                <td class="zuordnung">
+                                    {{-- Jede zugeordnete Warengruppe ist eine Marke mit
+                                         eigenem Kreuz. Alle Kreuze eines Bereichs teilen
+                                         sich ein Formular: Welche Gruppe gemeint ist,
+                                         sagt der Wert des gedrückten Knopfes. --}}
+                                    @forelse ($bereich->productGroups as $gruppe)
+                                        <span class="marke">
+                                            {{ $gruppe->label }}
+                                            <button form="{{ $f }}raus" type="submit"
+                                                    name="product_group_id" value="{{ $gruppe->id }}"
+                                                    title="{{ $gruppe->label }} herausnehmen"
+                                                    aria-label="{{ $gruppe->label }} herausnehmen">×</button>
+                                        </span>
+                                    @empty
+                                        <span class="gedaempft">— noch keine —</span>
+                                    @endforelse
 
-                                         Das versteckte Merkmal sagt dem Server, dass die
-                                         Zuordnung gemeint ist. Ohne es wäre „alles abwählen
-                                         und speichern" wirkungslos: Eine leere
-                                         Mehrfachauswahl sendet gar kein Feld. --}}
-                                    <input form="{{ $f }}" type="hidden" name="zuordnung" value="1">
-                                    <select form="{{ $f }}" name="gruppen[]" multiple size="4"
-                                            aria-label="Warengruppen in diesem Bereich">
-                                        @foreach ($gruppen as $gruppe)
-                                            <option value="{{ $gruppe->id }}"
-                                                @selected($bereich->productGroups->contains($gruppe))>{{ $gruppe->label }}</option>
-                                        @endforeach
-                                    </select>
+                                    {{-- Zur Wahl steht nur, was in diesem Markt noch
+                                         nirgends liegt. Ist alles verteilt, verschwindet
+                                         das Feld statt leer dazustehen. --}}
+                                    @if ($freieGruppen[$markt->id]->isNotEmpty())
+                                        <form method="POST" action="{{ route('stammdaten.bereiche.gruppen.attach', $bereich) }}"
+                                              class="dazu">
+                                            @csrf
+                                            <select name="product_group_id" required
+                                                    aria-label="Warengruppe zu {{ $bereich->name }} hinzufügen">
+                                                <option value="">— Warengruppe wählen —</option>
+                                                @foreach ($freieGruppen[$markt->id] as $frei)
+                                                    <option value="{{ $frei->id }}">{{ $frei->label }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="knopf-schlicht">Zuordnen</button>
+                                        </form>
+                                    @endif
                                 </td>
                                 <td class="knopfspalte">
                                     <button form="{{ $f }}" type="submit" class="knopf-schlicht">Speichern</button>
@@ -144,6 +169,10 @@
                 <form id="bereich{{ $bereich->id }}weg" method="POST" hidden
                       action="{{ route('stammdaten.bereiche.destroy', $bereich) }}"
                       onsubmit="return confirm('Regalbereich „{{ $bereich->name }}“ löschen?')">
+                    @csrf @method('DELETE')
+                </form>
+                <form id="bereich{{ $bereich->id }}raus" method="POST" hidden
+                      action="{{ route('stammdaten.bereiche.gruppen.detach', $bereich) }}">
                     @csrf @method('DELETE')
                 </form>
             @endforeach

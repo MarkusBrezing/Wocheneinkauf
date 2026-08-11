@@ -109,10 +109,17 @@ class MandantentrennungTest extends TestCase
             ];
         });
 
-        // Manipuliertes Formular: eine fremde ID mitschicken.
-        $this->actingAs($userA)->put('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', [
-            'gruppen' => [$eigeneGruppe->id, $fremdeGruppe->id],
+        // Die eigene Warengruppe geht durch.
+        $this->actingAs($userA)->post('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', [
+            'product_group_id' => $eigeneGruppe->id,
         ])->assertRedirect();
+
+        // Manipuliertes Formular: eine fremde ID unterschieben. Sie wird ueber
+        // den Global Scope nachgeladen und trifft dabei ins Leere -- 404 statt
+        // eines Datenbankfehlers am Verbund-Fremdschluessel.
+        $this->actingAs($userA)->post('/stammdaten/bereiche/'.$bereich->id.'/warengruppen', [
+            'product_group_id' => $fremdeGruppe->id,
+        ])->assertNotFound();
 
         $this->assertDatabaseHas('market_section_groups', [
             'market_section_id' => $bereich->id,

@@ -270,7 +270,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/maerkte/{markt}/bereiche', [MarketController::class, 'storeSection'])->name('bereiche.store');
         Route::put('/bereiche/{bereich}', [MarketController::class, 'updateSection'])->name('bereiche.update');
         Route::delete('/bereiche/{bereich}', [MarketController::class, 'destroySection'])->name('bereiche.destroy');
-        Route::put('/bereiche/{bereich}/warengruppen', [MarketController::class, 'syncGroups'])->name('bereiche.gruppen');
+        // Zuordnung je Warengruppe statt in einem Rutsch: hinzufuegen und
+        // wieder herausnehmen, beides mit derselben Adresse.
+        Route::post('/bereiche/{bereich}/warengruppen', [MarketController::class, 'attachGroup'])->name('bereiche.gruppen.attach');
+        Route::delete('/bereiche/{bereich}/warengruppen', [MarketController::class, 'detachGroup'])->name('bereiche.gruppen.detach');
 
         // Artikelkatalog (B-06)
         Route::get('/produkte', [ProductController::class, 'index'])->name('produkte.index');
