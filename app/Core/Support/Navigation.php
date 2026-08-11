@@ -143,15 +143,19 @@ class Navigation
                 ],
             ],
 
+            /*
+             * Die Reihenfolge ist die der Pflege, nicht die der Häufigkeit:
+             * Warengruppen zuerst, weil alles andere auf ihnen aufbaut; dann
+             * die Märkte, deren Regalbereiche Warengruppen zugeordnet
+             * bekommen; zuletzt die Artikel, die beides brauchen -- eine
+             * Warengruppe zum Einsortieren und Märkte für die Verfügbarkeit.
+             *
+             * Wer den Bereich anklickt, landet damit am Anfang der Kette und
+             * nicht in ihrer Mitte.
+             */
             'stammdaten' => [
                 'label' => 'Stammdaten',
                 'items' => [
-                    [
-                        'label' => 'Artikel',
-                        'route' => 'stammdaten.produkte.index',
-                        'geraet' => 'pc',
-                        'treffer' => ['stammdaten.produkte'],
-                    ],
                     [
                         'label' => 'Warengruppen',
                         'route' => 'stammdaten.warengruppen.index',
@@ -163,6 +167,14 @@ class Navigation
                         'route' => 'stammdaten.maerkte.index',
                         'geraet' => 'pc',
                         'treffer' => ['stammdaten.maerkte', 'stammdaten.bereiche'],
+                    ],
+                    [
+                        'label' => 'Artikel',
+                        'route' => 'stammdaten.produkte.index',
+                        'geraet' => 'pc',
+                        // Das Zuruecksetzen haengt am Artikelkatalog -- ohne
+                        // den Treffer verloere die Seite ihre Menueebene.
+                        'treffer' => ['stammdaten.produkte', 'stammdaten.zuruecksetzen'],
                     ],
                 ],
             ],

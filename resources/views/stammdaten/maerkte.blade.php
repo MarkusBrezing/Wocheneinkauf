@@ -2,6 +2,8 @@
 @section('title', 'Märkte')
 
 @section('inhalt')
+    @include('partials.stammdaten-schritte')
+
     <h1>Märkte</h1>
 
     <p class="gedaempft">

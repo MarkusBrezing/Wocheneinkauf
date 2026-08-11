@@ -2,6 +2,18 @@
 
 *Seitenart: 🖥 PC · Adressen: `/stammdaten/produkte`, `/stammdaten/warengruppen`*
 
+## Die Reihenfolge der Pflege
+
+Stammdaten hängen aneinander, deshalb steht das Menü in der Reihenfolge, in der man vorgeht:
+
+**1 Warengruppen → 2 Märkte → 3 Artikel**
+
+Warengruppen gliedern alles. Märkte ordnen ihre Regalbereiche den Warengruppen zu. Artikel brauchen beides — eine Warengruppe zum Einsortieren und, falls es sie nicht überall gibt, die Märkte für die Verfügbarkeit.
+
+Wer mittendrin anfängt, legt Artikel an, für die es noch keine passende Warengruppe gibt — und wundert sich später über den Abschnitt „Ohne Warengruppe" auf der Einkaufsliste. Auf allen drei Seiten steht die Kette deshalb oben, mit der aktuellen Stufe hervorgehoben.
+
+Für den Anfang müssen Sie gar nichts davon tun: Der Startdatensatz bringt Warengruppen, Regeln und einen Markt mit.
+
 ## Wozu der Artikelkatalog gut ist
 
 Der Katalog ist die **gemeinsame Klammer**: Ein Eintrag auf der Einkaufsliste, eine Zutat in einem Rezept und eine Position im Vorrat zeigen auf denselben Artikel. Nur deshalb weiß die Anwendung, dass die Zwiebeln aus dem Curry und die Zwiebeln aus der Suppe dieselben sind.

@@ -2,6 +2,8 @@
 @section('title', 'Warengruppen')
 
 @section('inhalt')
+    @include('partials.stammdaten-schritte')
+
     <h1>Warengruppen</h1>
 
     <p class="gedaempft">

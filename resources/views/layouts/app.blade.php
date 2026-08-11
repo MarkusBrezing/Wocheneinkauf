@@ -179,7 +179,30 @@
         @media (max-width: 34rem) { .streifen-tablet .warum { display: inline; } }
         @media (min-width: 60rem) { .streifen-handy .warum { display: inline; } }
 
-        @media print { .nav-bereiche, .nav-seiten, .geraetestreifen { display: none; } }
+        /*
+         * Die Kette der Stammdatenpflege. Sie steht auf allen drei Seiten und
+         * beantwortet die Frage, in welcher Reihenfolge man vorgeht -- bevor
+         * jemand Artikel anlegt, für die es noch keine Warengruppe gibt.
+         */
+        .pflegeschritte { margin: 0 0 1.5rem; }
+        .pflegeschritte ol { display: flex; gap: 0.4rem; flex-wrap: wrap;
+            list-style: none; margin: 0; padding: 0; align-items: center; }
+        .pflegeschritte li + li::before { content: '→'; color: var(--gedaempft);
+            margin-right: 0.4rem; }
+        .pflegeschritte li { display: flex; align-items: center; }
+        .pflegeschritte a { display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.25rem 0.7rem; border: 1px solid var(--rand); border-radius: 999px;
+            background: var(--hintergrund); text-decoration: none; font-size: 0.9rem; }
+        .pflegeschritte a:hover { border-color: var(--primaer); text-decoration: none; }
+        .pflegeschritte a.aktiv { background: var(--primaer); color: #FDFBF7;
+            border-color: var(--primaer); font-weight: 600; }
+        .pflegeschritte .nr { display: inline-grid; place-items: center;
+            width: 1.25rem; height: 1.25rem; border-radius: 50%;
+            background: var(--flaeche); color: var(--gedaempft); font-size: 0.75rem; }
+        .pflegeschritte a.aktiv .nr { background: #FDFBF7; color: var(--primaer); }
+        .pflegeschritte p { margin: 0.4rem 0 0; font-size: 0.82rem; }
+
+        @media print { .nav-bereiche, .nav-seiten, .geraetestreifen, .pflegeschritte { display: none; } }
         table { border-collapse: collapse; width: 100%; margin-top: 0.75rem; }
         th, td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rand); }
         thead th { background: var(--flaeche); }

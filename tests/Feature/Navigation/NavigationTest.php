@@ -63,6 +63,35 @@ class NavigationTest extends TestCase
         $this->assertSame('Wochenplan', Navigation::aktiv('wochenplan.index')['item']['label']);
     }
 
+    /**
+     * Stammdaten hängen aneinander: Warengruppen gliedern alles, Märkte ordnen
+     * ihre Regalbereiche den Warengruppen zu, Artikel brauchen beides. Das Menü
+     * folgt dieser Kette, damit niemand in ihrer Mitte anfängt.
+     */
+    public function test_die_stammdaten_stehen_in_der_reihenfolge_ihrer_pflege(): void
+    {
+        $namen = array_column(Navigation::gruppen()['stammdaten']['items'], 'label');
+
+        $this->assertSame(['Warengruppen', 'Märkte', 'Artikel'], $namen);
+
+        // Der Bereichsknopf führt an den Anfang der Kette, nicht in ihre Mitte.
+        $this->actingAs($this->nutzer())->get('/dashboard')
+            ->assertOk()
+            ->assertSee(route('stammdaten.warengruppen.index'));
+    }
+
+    public function test_die_stammdatenseiten_zeigen_die_kette_der_pflege(): void
+    {
+        $nutzer = $this->nutzer();
+
+        foreach (['warengruppen', 'maerkte', 'produkte'] as $seite) {
+            $this->actingAs($nutzer)->get('/stammdaten/'.$seite)
+                ->assertOk()
+                ->assertSee('Reihenfolge der Stammdatenpflege')
+                ->assertSee('Warengruppen gliedern alles');
+        }
+    }
+
     public function test_seiten_ohne_geraetezuordnung_bekommen_keine_marke(): void
     {
         $this->assertNull(Navigation::geraet('dashboard'));

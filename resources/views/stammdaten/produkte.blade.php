@@ -2,6 +2,8 @@
 @section('title', 'Artikel')
 
 @section('inhalt')
+    @include('partials.stammdaten-schritte')
+
     {{--
         Diese Seite wird am Rechner gepflegt, nicht im Supermarkt. Deshalb
         bricht sie aus der Lesebreite des Layouts aus und arbeitet mit echten
