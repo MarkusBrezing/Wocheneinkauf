@@ -152,16 +152,23 @@ class MarketController extends Controller
             'sort' => ['required', 'integer', 'between:0,65535'],
             'gruppen' => ['array'],
             'gruppen.*' => ['integer'],
+            'zuordnung' => ['nullable', 'boolean'],
         ]);
 
         $bereich->update(['name' => $daten['name'], 'sort' => $daten['sort']]);
 
-        // Die Zuordnung darf mitkommen, muss aber nicht. So braucht eine
-        // Tabellenzeile nur ein Formular -- und Speichern und Loeschen koennen
-        // beisammen am rechten Rand stehen, statt sich ueber die Zeile zu
-        // verteilen. Wer nur umbenennt (etwa ueber die Schnittstelle), schickt
-        // kein Feld gruppen und aendert die Zuordnung dadurch nicht.
-        if ($request->has('gruppen')) {
+        /*
+         * Die Zuordnung darf mitkommen, muss aber nicht -- so braucht eine
+         * Tabellenzeile nur ein Formular, und Speichern und Loeschen koennen
+         * beisammen am rechten Rand stehen.
+         *
+         * Ob sie gemeint ist, sagt das Merkmal "zuordnung" und nicht die
+         * Anwesenheit von "gruppen": Eine Mehrfachauswahl, in der nichts
+         * markiert ist, sendet ueberhaupt kein Feld. Am Feld selbst haengte
+         * die Entscheidung, waere "alles abwaehlen und speichern" wirkungslos
+         * -- und die letzte Warengruppe liesse sich nie mehr entfernen.
+         */
+        if ($request->boolean('zuordnung')) {
             $this->zuordnungSpeichern($bereich, $request->input('gruppen', []));
         }
 

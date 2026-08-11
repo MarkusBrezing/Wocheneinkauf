@@ -98,7 +98,13 @@
                                 <td>
                                     {{-- Die Zuordnung gehört zum selben Formular wie Name
                                          und Reihenfolge -- ein Speichern für die ganze
-                                         Zeile statt zwei nebeneinander. --}}
+                                         Zeile statt zwei nebeneinander.
+
+                                         Das versteckte Merkmal sagt dem Server, dass die
+                                         Zuordnung gemeint ist. Ohne es wäre „alles abwählen
+                                         und speichern" wirkungslos: Eine leere
+                                         Mehrfachauswahl sendet gar kein Feld. --}}
+                                    <input form="{{ $f }}" type="hidden" name="zuordnung" value="1">
                                     <select form="{{ $f }}" name="gruppen[]" multiple size="4"
                                             aria-label="Warengruppen in diesem Bereich">
                                         @foreach ($gruppen as $gruppe)

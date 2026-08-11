@@ -16,11 +16,27 @@ Voreingestellt ist ein Markt „Supermarkt" mit 10 Bereichen in einer üblichen 
 
 Ein Markt ist **Standard** — er wird für neue Listen vorgeschlagen. Ein stillgelegter Markt verschwindet aus der Auswahl, bleibt aber an alten Listen erhalten.
 
-## Warengruppen zuordnen
+## Warengruppen einem Bereich zuordnen
+
+In der Tabelle des Marktes hat jeder Regalbereich eine eigene Zeile. Die dritte Spalte — **„Warengruppen, die hier liegen"** — ist ein Auswahlfeld mit mehreren Zeilen. Darin markieren Sie alles, was in diesem Bereich steht:
+
+| Was Sie wollen | Wie |
+|---|---|
+| Eine Warengruppe wählen | anklicken |
+| Eine weitere dazunehmen | **Strg** gedrückt halten und anklicken (am Mac: **Cmd**) |
+| Einen ganzen Block | erste anklicken, **Umschalt** halten, letzte anklicken |
+| Eine wieder herausnehmen | **Strg** halten und erneut anklicken |
+| Alle herausnehmen | Strg-Klick, bis nichts mehr markiert ist |
+
+Danach **Speichern** am rechten Rand derselben Zeile. Dieser eine Knopf sichert Reihenfolge, Name *und* Zuordnung — es gibt kein zweites Speichern für die Auswahl.
+
+> Das Feld zeigt vier Zeilen auf einmal; bei fünfzehn Warengruppen wird darin gescrollt. Was markiert ist, bleibt beim Scrollen markiert, auch wenn Sie es gerade nicht sehen.
 
 Dieselbe Warengruppe darf in verschiedenen Märkten in verschiedenen Bereichen liegen. Im Supermarkt sind die Getränke ganz hinten, im Discounter gleich am Eingang — genau dafür ist die Zuordnung je Markt da.
 
-Warengruppen ohne Zuordnung landen in einem Sammelabschnitt am Ende der Liste. Das ist kein Fehler, sondern eine Erinnerung.
+Liegt eine Warengruppe versehentlich in **zwei** Bereichen desselben Marktes, gewinnt der erste in Laufreihenfolge. Die Anwendung entscheidet sich also, statt den Artikel doppelt aufzuführen.
+
+Warengruppen ohne Zuordnung landen in einem Sammelabschnitt „Ohne Regalbereich" am Ende der Liste. Das ist kein Fehler, sondern eine Erinnerung.
 
 ## Wo es einen Artikel gibt
 

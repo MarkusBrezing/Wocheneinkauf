@@ -175,6 +175,7 @@ class WarengruppenUndMaerkteTest extends TestCase
             ->put('/stammdaten/bereiche/'.$bereich->id, [
                 'name' => 'Getränkeregal',
                 'sort' => 12,
+                'zuordnung' => '1',
                 'gruppen' => $gruppen->all(),
             ])
             ->assertRedirect()->assertSessionHasNoErrors();
@@ -187,10 +188,41 @@ class WarengruppenUndMaerkteTest extends TestCase
     }
 
     /**
-     * Wer nur umbenennt, ohne das Feld gruppen zu schicken, darf die Zuordnung
+     * Die letzte Warengruppe muss sich entfernen lassen.
+     *
+     * Eine Mehrfachauswahl, in der nichts markiert ist, sendet gar kein Feld.
+     * Hinge die Entscheidung an „gruppen", wäre „alles abwählen und speichern"
+     * wirkungslos -- deshalb das eigene Merkmal „zuordnung".
+     */
+    public function test_alles_abwaehlen_leert_die_zuordnung(): void
+    {
+        [$owner] = $this->familie();
+
+        $bereich = $this->imKontext(
+            $owner,
+            fn () => Market::firstOrFail()->sections()->where('name', 'Kühlregal')->firstOrFail()
+        );
+
+        $this->assertSame(2, $this->imKontext($owner, fn () => $bereich->productGroups()->count()));
+
+        // Genau das, was der Browser bei leerer Auswahl schickt: das Merkmal,
+        // aber kein einziges gruppen[].
+        $this->actingAs($owner)
+            ->put('/stammdaten/bereiche/'.$bereich->id, [
+                'name' => 'Kühlregal',
+                'sort' => 30,
+                'zuordnung' => '1',
+            ])
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame(0, $this->imKontext($owner, fn () => $bereich->productGroups()->count()));
+    }
+
+    /**
+     * Wer nur umbenennt, ohne das Merkmal zu schicken, darf die Zuordnung
      * nicht verlieren -- sonst würde jede Umbenennung sie stillschweigend leeren.
      */
-    public function test_ohne_das_feld_gruppen_bleibt_die_zuordnung_stehen(): void
+    public function test_ohne_das_merkmal_bleibt_die_zuordnung_stehen(): void
     {
         [$owner] = $this->familie();
         $markt = $this->imKontext($owner, fn () => Market::firstOrFail());
