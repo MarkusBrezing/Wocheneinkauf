@@ -108,8 +108,7 @@
     </form>
 
     <p class="gedaempft" style="margin:0.6rem 0 0">
-        {{ $produkte->total() }} von {{ $gesamt }} Artikeln
-        @if ($produkte->hasPages()) · Seite {{ $produkte->currentPage() }} von {{ $produkte->lastPage() }} @endif
+        {{ $produkte->count() }} von {{ $gesamt }} Artikeln
         · Enter im Feld speichert die Zeile
     </p>
 
@@ -117,17 +116,24 @@
         // Die Abfrage ordnet bereits nach Warengruppe, groupBy behält diese
         // Reihenfolge -- die Abschnitte stehen also in Laufreihenfolge des
         // Marktes, nicht alphabetisch.
-        $abschnitte = $produkte->getCollection()->groupBy(
+        // Gefiltert oder gesucht? Dann ist die Trefferliste der Zweck der
+        // Seite und steht offen.
+        $aufgeklappt = $suche !== '' || $gruppe || $nurVorrat || $nurEingeschraenkt;
+
+        $abschnitte = $produkte->groupBy(
             fn ($p) => $p->productGroup?->label ?? 'Ohne Warengruppe'
         );
     @endphp
 
     @forelse ($abschnitte as $warengruppe => $artikel)
-        {{-- Ein Abschnitt je Warengruppe, aufgeklappt. Wer die Molkereiwaren
-             gerade nicht braucht, klappt sie zu; der Zustand hält allerdings
-             nur bis zum nächsten Seitenaufruf -- ihn zu speichern wäre eine
-             Einstellung, und dafür ist er zu beiläufig. --}}
-        <details class="warengruppe" open>
+        {{-- Ein Abschnitt je Warengruppe, zugeklappt. Die Seite zeigt damit
+             zuerst ihre Gliederung und nicht dreihundert Eingabefelder -- wer
+             etwas pflegen will, weiß, in welcher Warengruppe er sucht.
+
+             Wird gefiltert oder gesucht, stehen die Abschnitte offen: Dann ist
+             die Trefferliste der Zweck der Seite, und sie erst aufklappen zu
+             müssen wäre ein Klick zu viel. --}}
+        <details class="warengruppe" {{ $aufgeklappt ? 'open' : '' }}>
             <summary>
                 {{ $warengruppe }}
                 <span class="anzahl">{{ $artikel->count() }}</span>
@@ -180,8 +186,6 @@
             @csrf @method('DELETE')
         </form>
     @endforeach
-
-    {{ $produkte->links() }}
 
     <h2>Neuer Artikel</h2>
     <form method="POST" action="{{ route('stammdaten.produkte.store') }}">

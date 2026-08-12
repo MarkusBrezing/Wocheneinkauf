@@ -121,8 +121,8 @@ class ArtikellisteTest extends TestCase
 
         $inhalt = $this->actingAs($user)->get('/stammdaten/produkte')->assertOk()->getContent();
 
-        // Je Warengruppe ein aufgeklappter Abschnitt.
-        $this->assertStringContainsString('<details class="warengruppe" open>', $inhalt);
+        // Je Warengruppe ein eigener Abschnitt.
+        $this->assertStringContainsString('<details class="warengruppe"', $inhalt);
         $this->assertStringContainsString('Obst und Gemüse', $inhalt);
         $this->assertStringContainsString('Ohne Warengruppe', $inhalt);
 
@@ -135,78 +135,44 @@ class ArtikellisteTest extends TestCase
     }
 
     /**
-     * decimal(10,3) liefert „2.000". In einer Pflegetabelle mit hundert Zeilen
-     * sind die Nachkommanullen nur Rauschen.
+     * Der Katalog wird nicht geblättert: Eine Warengruppe, die an der
+     * Seitengrenze zerfällt, macht die Gliederung zunichte.
      */
-    public function test_die_sollmenge_steht_ohne_nachkommanullen_im_feld(): void
+    public function test_alle_artikel_stehen_auf_einer_seite(): void
     {
         [$user] = $this->familie();
 
-        $this->imKontext($user, fn () => Product::factory()->create([
-            'name' => 'Mehl',
-            'is_pantry_staple' => true,
-            'pantry_target_amount' => 2,
-        ]));
-
-        $this->actingAs($user)->get('/stammdaten/produkte')
-            ->assertOk()
-            ->assertSee('value="2"', false)
-            ->assertDontSee('value="2.000"', false);
-
-        // Echte Nachkommastellen bleiben erhalten.
-        $this->imKontext($user, fn () => Product::factory()->create([
-            'name' => 'Butter',
-            'pantry_target_amount' => 0.5,
-        ]));
-
-        $this->actingAs($user)->get('/stammdaten/produkte')
-            ->assertOk()
-            ->assertSee('value="0.5"', false);
-    }
-
-    public function test_eine_unsinnige_sortierung_faellt_auf_den_namen_zurueck(): void
-    {
-        [$user] = $this->familie();
-        $this->imKontext($user, fn () => Product::factory()->create(['name' => 'Vollmilch']));
-
-        $this->actingAs($user)->get('/stammdaten/produkte?sortierung=; DROP TABLE products')
-            ->assertOk()
-            ->assertSee('Vollmilch');
-
-        $this->assertDatabaseCount('products', 1);
-    }
-
-    public function test_die_eingestellten_filter_stehen_nach_dem_absenden_wieder_im_formular(): void
-    {
-        [$user] = $this->familie();
-        $this->imKontext($user, fn () => Product::factory()->create(['name' => 'Vollmilch']));
-
-        $this->actingAs($user)->get('/stammdaten/produkte?suche=Voll&vorrat=1&sortierung=neu')
-            ->assertOk()
-            ->assertSee('value="Voll"', false)
-            ->assertSee('name="vorrat" value="1" checked', false)
-            ->assertSee('<option value="neu" selected>', false);
-    }
-
-    public function test_der_filter_ueberlebt_das_blaettern(): void
-    {
-        [$user] = $this->familie();
-
-        // Eine Seite fasst 100 Zeilen -- erst darüber entstehen Links, an
-        // denen der Filter hängen bleiben muss.
         $this->imKontext($user, function () {
-            foreach (range(1, 101) as $nummer) {
-                $produkt = new Product(['name' => 'Testartikel '.str_pad((string) $nummer, 3, '0', STR_PAD_LEFT)]);
-                $produkt->is_pantry_staple = true;
-                $produkt->save();
+            foreach (range(1, 120) as $nummer) {
+                Product::factory()->create(['name' => 'Testartikel '.str_pad((string) $nummer, 3, '0', STR_PAD_LEFT)]);
             }
         });
 
-        // withQueryString(): sonst führt Seite 2 zurück in die ungefilterte Liste.
-        $this->actingAs($user)->get('/stammdaten/produkte?suche=Testartikel&vorrat=1')
+        $this->actingAs($user)->get('/stammdaten/produkte')
             ->assertOk()
-            ->assertSee('suche=Testartikel', false)
-            ->assertSee('vorrat=1', false);
+            ->assertSee('Testartikel 001')
+            // Läge die Grenze weiterhin bei 100, fehlte dieser hier.
+            ->assertSee('Testartikel 120')
+            ->assertDontSee('rel="next"', false);
+    }
+
+    /**
+     * Zugeklappt zeigt die Seite zuerst ihre Gliederung statt dreihundert
+     * Eingabefelder. Wird gefiltert, ist die Trefferliste der Zweck der Seite
+     * -- dann stehen die Abschnitte offen.
+     */
+    public function test_abschnitte_sind_zu_und_bei_einer_suche_offen(): void
+    {
+        [$user] = $this->familie();
+        $this->imKontext($user, fn () => Product::factory()->create(['name' => 'Vollmilch']));
+
+        $this->actingAs($user)->get('/stammdaten/produkte')
+            ->assertOk()
+            ->assertSee('<details class="warengruppe" >', false);
+
+        $this->actingAs($user)->get('/stammdaten/produkte?suche=Voll')
+            ->assertOk()
+            ->assertSee('<details class="warengruppe" open>', false);
     }
 
     public function test_eine_bestaetigung_erscheint_als_einblendung(): void

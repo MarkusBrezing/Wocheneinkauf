@@ -36,9 +36,11 @@ Laden dürfen nur Inhaber und Administratoren.
 
 Die Seite ist für die Pflege am PC gebaut: Filter über der Tabelle, abwechselnd eingefärbte Zeilen, Speichern und Löschen am rechten Rand jeder Zeile.
 
-**Gegliedert ist die Liste nach Warengruppen** — in derselben Reihenfolge wie die Einkaufsliste, also nach der Laufreihenfolge des Marktes und nicht alphabetisch. Jeder Abschnitt lässt sich **zuklappen**; die Zahl rechts im Kopf sagt, wie viele Artikel darin stecken. Wer gerade nur die Molkereiwaren pflegt, klappt den Rest weg.
+**Gegliedert ist die Liste nach Warengruppen** — in derselben Reihenfolge wie die Einkaufsliste, also nach der Laufreihenfolge des Marktes und nicht alphabetisch. Die Abschnitte sind **zugeklappt**; die Zahl rechts im Kopf sagt, wie viele Artikel darin stecken. Sie sehen damit zuerst die Gliederung und öffnen nur, was Sie pflegen wollen.
 
-> Der Zustand hält bis zum nächsten Seitenaufruf. Ihn dauerhaft zu speichern wäre eine Einstellung — dafür ist er zu beiläufig.
+Sobald Sie **suchen oder filtern**, stehen alle Abschnitte offen — dann ist die Trefferliste der Zweck der Seite.
+
+> Geblättert wird nicht: Alle Artikel stehen auf einer Seite. Eine Warengruppe, die an einer Seitengrenze zerfällt, wäre kein Abschnitt mehr. Der Zustand der Klappen hält bis zum nächsten Seitenaufruf.
 
 | Spalte | Bedeutung |
 |---|---|

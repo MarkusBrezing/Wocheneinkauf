@@ -31,8 +31,9 @@ class ProductController extends Controller
      *
      * Diese Seite wird am Rechner gepflegt, nicht im Laden -- entsprechend
      * breit ist sie angelegt, und entsprechend viel darf sie auf einmal
-     * zeigen. Filter und Sortierung ersetzen das Scrollen durch mehrere
-     * hundert Zeilen.
+     * zeigen: alles, gegliedert in zugeklappte Abschnitte je Warengruppe.
+     * Filter und Sortierung ersetzen das Scrollen durch mehrere hundert
+     * Zeilen.
      */
     public function index(Request $request)
     {
@@ -53,8 +54,11 @@ class ProductController extends Controller
             ->when($nurEingeschraenkt, fn ($q) => $q->has('markets'))
             ->with(['productGroup', 'markets'])
             ->tap(fn ($q) => $this->sortiere($q, $sortierung))
-            ->paginate(100)
-            ->withQueryString();
+            // Ohne Blaettern: Der Katalog eines Haushalts umfasst ein paar
+            // hundert Zeilen, und eine Warengruppe, die an der Seitengrenze
+            // zerfaellt, macht die Gliederung zunichte. Wem es zu viel wird,
+            // dem helfen die Filter darueber -- nicht eine zweite Seite.
+            ->get();
 
         return view('stammdaten.produkte', [
             'produkte' => $produkte,
