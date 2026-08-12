@@ -34,7 +34,11 @@ Laden dürfen nur Inhaber und Administratoren.
 
 ## Die Artikelliste
 
-Die Seite ist für die Pflege am PC gebaut — eine Tabelle mit abwechselnd eingefärbten Zeilen, Filter über der Tabelle, Sortierung per Spaltenkopf.
+Die Seite ist für die Pflege am PC gebaut: Filter über der Tabelle, abwechselnd eingefärbte Zeilen, Speichern und Löschen am rechten Rand jeder Zeile.
+
+**Gegliedert ist die Liste nach Warengruppen** — in derselben Reihenfolge wie die Einkaufsliste, also nach der Laufreihenfolge des Marktes und nicht alphabetisch. Jeder Abschnitt lässt sich **zuklappen**; die Zahl rechts im Kopf sagt, wie viele Artikel darin stecken. Wer gerade nur die Molkereiwaren pflegt, klappt den Rest weg.
+
+> Der Zustand hält bis zum nächsten Seitenaufruf. Ihn dauerhaft zu speichern wäre eine Einstellung — dafür ist er zu beiläufig.
 
 | Spalte | Bedeutung |
 |---|---|
@@ -42,7 +46,7 @@ Die Seite ist für die Pflege am PC gebaut — eine Tabelle mit abwechselnd eing
 | **Warengruppe** | Bestimmt, in welchem Abschnitt der Liste er landet |
 | **Einheit** | Vorschlag beim Aufschreiben |
 | **Grundvorrat** | Soll immer im Haus sein (siehe Kapitel *Vorrat*) |
-| **Sollmenge** | Wie viel davon |
+| **Sollmenge** | Wie viel davon — ohne Nachkommanullen, halbe Mengen sind erlaubt |
 | **Erhältlich in** | Leer heißt: überall |
 
 Nach dem Speichern erscheint oben rechts kurz „Artikel gespeichert" und verschwindet nach zehn Sekunden von selbst. Beim Pflegen einer Tabelle wird im Minutentakt gespeichert — eine Meldung, die stehen bleibt und den Inhalt nach unten schiebt, wäre dabei mehr Störung als Hilfe.

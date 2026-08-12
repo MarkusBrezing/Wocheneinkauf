@@ -153,6 +153,25 @@ class Product extends Model
     /**
      * Sollmenge und Einheit als ein Stueck Text: "2 l", "10 Stk".
      */
+    /**
+     * Die Sollmenge als Wert fuer ein Zahlenfeld.
+     *
+     * decimal(10,3) liefert "2.000" -- in einer Pflegetabelle mit hundert
+     * Zeilen sind die Nachkommanullen nur Rauschen. Anders als
+     * sollmengeAnzeige() bleibt hier der Punkt als Trennzeichen stehen: Ein
+     * input[type=number] versteht kein Komma und wuerde das Feld leeren.
+     */
+    public function sollmengeFeldwert(): string
+    {
+        if ($this->pantry_target_amount === null) {
+            return '';
+        }
+
+        $wert = rtrim(rtrim((string) $this->pantry_target_amount, '0'), '.');
+
+        return $wert === '' ? '0' : $wert;
+    }
+
     public function sollmengeAnzeige(): string
     {
         $menge = ShoppingListItem::formatiereMenge($this->pantry_target_amount);

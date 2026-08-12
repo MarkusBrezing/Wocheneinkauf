@@ -102,6 +102,68 @@ class ArtikellisteTest extends TestCase
         );
     }
 
+    /**
+     * Die Tabelle ist nach Warengruppen gegliedert, jeder Abschnitt für sich
+     * klappbar -- dieselbe Ordnung wie auf der Einkaufsliste.
+     */
+    public function test_die_liste_ist_nach_warengruppen_gegliedert(): void
+    {
+        [$user] = $this->familie();
+
+        $this->imKontext($user, function () {
+            $milch = ProductGroup::where('code', 'MILCH')->firstOrFail();
+            $obst = ProductGroup::where('code', 'OBST_GEMUESE')->firstOrFail();
+
+            Product::factory()->create(['name' => 'Vollmilch', 'product_group_id' => $milch->id]);
+            Product::factory()->create(['name' => 'Bananen', 'product_group_id' => $obst->id]);
+            Product::factory()->create(['name' => 'Schraubenzieher', 'product_group_id' => null]);
+        });
+
+        $inhalt = $this->actingAs($user)->get('/stammdaten/produkte')->assertOk()->getContent();
+
+        // Je Warengruppe ein aufgeklappter Abschnitt.
+        $this->assertStringContainsString('<details class="warengruppe" open>', $inhalt);
+        $this->assertStringContainsString('Obst und Gemüse', $inhalt);
+        $this->assertStringContainsString('Ohne Warengruppe', $inhalt);
+
+        // Obst und Gemüse steht im Markt vor den Milchprodukten -- der
+        // Abschnitt also auch, unabhängig vom Alphabet.
+        $this->assertLessThan(
+            strpos($inhalt, 'Vollmilch'),
+            strpos($inhalt, 'Bananen'),
+        );
+    }
+
+    /**
+     * decimal(10,3) liefert „2.000". In einer Pflegetabelle mit hundert Zeilen
+     * sind die Nachkommanullen nur Rauschen.
+     */
+    public function test_die_sollmenge_steht_ohne_nachkommanullen_im_feld(): void
+    {
+        [$user] = $this->familie();
+
+        $this->imKontext($user, fn () => Product::factory()->create([
+            'name' => 'Mehl',
+            'is_pantry_staple' => true,
+            'pantry_target_amount' => 2,
+        ]));
+
+        $this->actingAs($user)->get('/stammdaten/produkte')
+            ->assertOk()
+            ->assertSee('value="2"', false)
+            ->assertDontSee('value="2.000"', false);
+
+        // Echte Nachkommastellen bleiben erhalten.
+        $this->imKontext($user, fn () => Product::factory()->create([
+            'name' => 'Butter',
+            'pantry_target_amount' => 0.5,
+        ]));
+
+        $this->actingAs($user)->get('/stammdaten/produkte')
+            ->assertOk()
+            ->assertSee('value="0.5"', false);
+    }
+
     public function test_eine_unsinnige_sortierung_faellt_auf_den_namen_zurueck(): void
     {
         [$user] = $this->familie();

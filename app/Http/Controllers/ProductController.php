@@ -216,13 +216,21 @@ class ProductController extends Controller
      */
     protected function sortiere($query, string $sortierung): void
     {
+        /*
+         * Die Warengruppe ordnet immer zuerst -- die Tabelle ist nach ihr
+         * gegliedert, und ein Abschnitt, dessen Zeilen ueber die Seite
+         * verstreut waeren, waere keiner. Die gewaehlte Sortierung entscheidet
+         * *innerhalb* der Gruppe.
+         *
+         * Sortiert wird nach der Laufreihenfolge der Warengruppe, nicht nach
+         * ihrem Namen: dieselbe Ordnung wie auf der Einkaufsliste.
+         */
+        $query->leftJoin('product_groups', 'products.product_group_id', '=', 'product_groups.id')
+            ->orderBy('product_groups.sort')
+            ->orderBy('product_groups.label')
+            ->select('products.*');
+
         match ($sortierung) {
-            'gruppe' => $query
-                ->leftJoin('product_groups', 'products.product_group_id', '=', 'product_groups.id')
-                ->orderBy('product_groups.sort')
-                ->orderBy('product_groups.label')
-                ->orderBy('products.name')
-                ->select('products.*'),
             'neu' => $query->orderByDesc('products.created_at')->orderByDesc('products.id'),
             default => $query->orderBy('products.name'),
         };

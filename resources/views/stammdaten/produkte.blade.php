@@ -17,6 +17,26 @@
            Artikelkatalog von Warengruppen und Märkten unterscheidet. */
         .katalog .schmal { width: 6rem; }
         .katalog .mittel { width: 11rem; }
+
+        /*
+         * Ein klappbarer Abschnitt je Warengruppe. Die Gliederung ist dieselbe
+         * wie auf der Einkaufsliste -- wer den Katalog pflegt, denkt in
+         * denselben Bloecken, in denen er später einkauft.
+         */
+        .warengruppe { margin-top: 1.25rem; border: 1px solid var(--rand); border-radius: 8px;
+            overflow: hidden; }
+        .warengruppe > summary { cursor: pointer; padding: 0.5rem 0.8rem;
+            background: var(--primaer-hell); color: var(--primaer);
+            font-weight: 600; display: flex; align-items: center; gap: 0.6rem; }
+        .warengruppe > summary:hover { filter: brightness(0.98); }
+        .warengruppe[open] > summary { border-bottom: 1px solid var(--rand); }
+        .warengruppe .anzahl { margin-left: auto; font-weight: 400; font-size: 0.85rem;
+            color: var(--gedaempft); background: var(--hintergrund);
+            border: 1px solid var(--rand); border-radius: 999px; padding: 0 0.5rem; }
+        /* Der klebende Tabellenkopf gehört in den Abschnitt, nicht an den
+           Seitenrand -- sonst stünden bei fünfzehn Abschnitten fünfzehn Köpfe
+           übereinander. */
+        .warengruppe .stammtabelle thead th { position: static; }
         /* Der Grundvorrat ist eine Eigenschaft, keine Handlung -- deshalb
            trägt die Spalte den warmen Akzent statt des Handlungsgrüns. */
         .katalog .vorrat-an { accent-color: var(--akzent); }
@@ -93,83 +113,55 @@
         · Enter im Feld speichert die Zeile
     </p>
 
-    <div class="tabellenrahmen">
-        <table class="stammtabelle katalog">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th class="mittel">Warengruppe</th>
-                    <th class="schmal">Einheit</th>
-                    <th class="schmal">Grundvorrat</th>
-                    <th class="schmal">Sollmenge</th>
-                    <th class="mittel">Erhältlich</th>
-                    <th class="knopfspalte"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($produkte as $produkt)
-                    @php $f = 'artikel'.$produkt->id; @endphp
-                    <tr>
-                        <td><input form="{{ $f }}" name="name" type="text" value="{{ $produkt->name }}" required></td>
-                        <td>
-                            <select form="{{ $f }}" name="product_group_id">
-                                <option value="">— ohne —</option>
-                                @foreach ($gruppen as $eintrag)
-                                    <option value="{{ $eintrag->id }}" @selected($produkt->product_group_id === $eintrag->id)>
-                                        {{ $eintrag->label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td><input form="{{ $f }}" name="default_unit" type="text" value="{{ $produkt->default_unit }}"></td>
-                        <td style="text-align:center">
-                            <input form="{{ $f }}" type="checkbox" name="is_pantry_staple" value="1"
-                                   class="vorrat-an" @checked($produkt->is_pantry_staple)
-                                   aria-label="{{ $produkt->name }} ist Grundvorrat">
-                        </td>
-                        <td>
-                            {{-- Wie viel davon im Haus sein soll. Der Assistent
-                                 „Neue Woche" und die Bestandsaufnahme rechnen damit. --}}
-                            <input form="{{ $f }}" name="pantry_target_amount" type="number"
-                                   step="0.001" min="0" value="{{ $produkt->pantry_target_amount }}"
-                                   aria-label="Sollmenge {{ $produkt->name }}">
-                        </td>
-                        <td>
-                            <details class="verfuegbarkeit">
-                                <summary>{{ $produkt->verfuegbarkeitshinweis() ?? 'überall' }}</summary>
-                                <div class="auswahl">
-                                    <label>
-                                        <input form="{{ $f }}" type="radio" name="verfuegbarkeit" value="ueberall"
-                                               @checked($produkt->istUeberallErhaeltlich())> überall
-                                    </label>
-                                    <label>
-                                        <input form="{{ $f }}" type="radio" name="verfuegbarkeit" value="auswahl"
-                                               @checked(! $produkt->istUeberallErhaeltlich())> nur in diesen Märkten
-                                    </label>
-                                    @foreach ($maerkte as $markt)
-                                        <label style="margin-left:1.2rem">
-                                            <input form="{{ $f }}" type="checkbox" name="maerkte[]" value="{{ $markt->id }}"
-                                                   @checked($produkt->markets->contains($markt))> {{ $markt->name }}
-                                        </label>
-                                    @endforeach
-                                </div>
-                            </details>
-                        </td>
-                        <td class="knopfspalte">
-                            <button form="{{ $f }}" type="submit" class="knopf-schlicht">Speichern</button>
-                            <button form="loeschen{{ $produkt->id }}" type="submit" class="knopf-schlicht">Löschen</button>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="gedaempft">
-                        {{ $suche !== '' || $gruppe || $nurVorrat || $nurEingeschraenkt
-                            ? 'Kein Artikel passt zu diesen Angaben.'
-                            : 'Noch keine Artikel im Katalog.' }}
-                    </td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+    @php
+        // Die Abfrage ordnet bereits nach Warengruppe, groupBy behält diese
+        // Reihenfolge -- die Abschnitte stehen also in Laufreihenfolge des
+        // Marktes, nicht alphabetisch.
+        $abschnitte = $produkte->getCollection()->groupBy(
+            fn ($p) => $p->productGroup?->label ?? 'Ohne Warengruppe'
+        );
+    @endphp
+
+    @forelse ($abschnitte as $warengruppe => $artikel)
+        {{-- Ein Abschnitt je Warengruppe, aufgeklappt. Wer die Molkereiwaren
+             gerade nicht braucht, klappt sie zu; der Zustand hält allerdings
+             nur bis zum nächsten Seitenaufruf -- ihn zu speichern wäre eine
+             Einstellung, und dafür ist er zu beiläufig. --}}
+        <details class="warengruppe" open>
+            <summary>
+                {{ $warengruppe }}
+                <span class="anzahl">{{ $artikel->count() }}</span>
+            </summary>
+
+            <div class="tabellenrahmen">
+                <table class="stammtabelle katalog">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th class="mittel">Warengruppe</th>
+                            <th class="schmal">Einheit</th>
+                            <th class="schmal">Grundvorrat</th>
+                            <th class="schmal">Sollmenge</th>
+                            <th class="mittel">Erhältlich</th>
+                            <th class="knopfspalte"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($artikel as $produkt)
+                            @php $f = 'artikel'.$produkt->id; @endphp
+                            @include('stammdaten.partials.artikelzeile')
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    @empty
+        <p class="gedaempft" style="margin-top:1rem">
+            {{ $suche !== '' || $gruppe || $nurVorrat || $nurEingeschraenkt
+                ? 'Kein Artikel passt zu diesen Angaben.'
+                : 'Noch kein Artikel im Katalog.' }}
+        </p>
+    @endforelse
 
     {{--
         Die Formulare stehen außerhalb der Tabelle und werden über das
@@ -221,7 +213,7 @@
             <div>
                 <label for="pantry_target_amount">Sollmenge</label>
                 <input id="pantry_target_amount" name="pantry_target_amount" type="number"
-                       step="0.001" min="0" value="{{ old('pantry_target_amount') }}"
+                       step="0.5" min="0" value="{{ old('pantry_target_amount') }}"
                        style="margin:0;width:6rem">
             </div>
             <button type="submit" style="margin:0">Anlegen</button>
