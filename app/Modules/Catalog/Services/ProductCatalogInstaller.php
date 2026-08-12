@@ -45,6 +45,64 @@ class ProductCatalogInstaller
     ) {}
 
     /**
+     * Was ein Lauf tun wuerde, ohne ihn zu tun.
+     *
+     * Grundlage der Sicherheitsabfrage. Sie zaehlt nicht nur, sondern nennt
+     * die vorhandenen Artikel beim Namen -- "12 waren schon da" beantwortet
+     * die eigentliche Frage nicht, naemlich *welche* und ob sie in Ruhe
+     * gelassen werden.
+     *
+     * @param  array<int, string>  $saetze
+     * @return array{neu: int, vorhanden: array<int, string>, gruppen: array<string, int>, gesamt: int}
+     */
+    public function vorschau(Family $family, array $saetze = self::STANDARD): array
+    {
+        return $this->context->runFor($family->getKey(), function () use ($saetze) {
+            $eintraege = $this->eintraege($saetze);
+            $vorhanden = [];
+            $gruppen = [];
+
+            foreach ($eintraege as $eintrag) {
+                if (Product::matchingName($eintrag['name'])->exists()) {
+                    $vorhanden[] = $eintrag['name'];
+
+                    continue;
+                }
+
+                $code = $eintrag['group'] ?? '—';
+                $gruppen[$code] = ($gruppen[$code] ?? 0) + 1;
+            }
+
+            return [
+                'neu' => count($eintraege) - count($vorhanden),
+                'vorhanden' => $vorhanden,
+                'gruppen' => $this->beschriftet($gruppen),
+                'gesamt' => count($eintraege),
+            ];
+        });
+    }
+
+    /**
+     * Warengruppen-Kuerzel gegen ihre Bezeichnung tauschen -- ein Kuerzel wie
+     * OBST_GEMUESE ist nichts, was auf einer Abfrageseite stehen sollte.
+     *
+     * @param  array<string, int>  $gezaehlt
+     * @return array<string, int>
+     */
+    protected function beschriftet(array $gezaehlt): array
+    {
+        $namen = ProductGroup::whereIn('code', array_keys($gezaehlt))->pluck('label', 'code');
+
+        $beschriftet = [];
+
+        foreach ($gezaehlt as $code => $anzahl) {
+            $beschriftet[$namen[$code] ?? $code] = $anzahl;
+        }
+
+        return $beschriftet;
+    }
+
+    /**
      * @param  array<int, string>  $saetze
      * @return array{angelegt: int, vorhanden: int}
      */

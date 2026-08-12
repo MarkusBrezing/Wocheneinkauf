@@ -20,6 +20,55 @@ class GrundsortimentTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_die_abfrage_zeigt_was_dazukaeme(): void
+    {
+        [$user] = $this->familie();
+
+        $anzahl = count(StarterData::basicAssortment());
+
+        $this->actingAs($user)->get('/stammdaten/produkte/grundsortiment')
+            ->assertOk()
+            ->assertSee('Grundsortiment laden')
+            ->assertSee((string) $anzahl)
+            ->assertSee('Es geht nichts verloren.')
+            // Warengruppen mit Bezeichnung, nicht mit Kuerzel.
+            ->assertSee('Obst und Gemüse')
+            ->assertDontSee('OBST_GEMUESE');
+    }
+
+    /**
+     * Ein zweiter Aufruf zeigt, was schon da ist -- und nennt es beim Namen.
+     * „12 waren schon da" beantwortet die eigentliche Frage nicht.
+     */
+    public function test_die_abfrage_nennt_die_vorhandenen_artikel(): void
+    {
+        [$user] = $this->familie();
+
+        $this->imKontext($user, fn () => Product::factory()->create(['name' => 'Mehl']));
+
+        $antwort = $this->actingAs($user)->get('/stammdaten/produkte/grundsortiment')->assertOk();
+
+        $antwort->assertSee('gibt es schon')->assertSee('Mehl');
+        $this->assertSame(['Mehl'], $antwort->viewData('vorschau')['vorhanden']);
+        $this->assertSame(count(StarterData::basicAssortment()) - 1, $antwort->viewData('vorschau')['neu']);
+    }
+
+    /**
+     * Ist alles vorhanden, gibt es nichts zu tun -- und der Knopf sagt das,
+     * statt einen folgenlosen Lauf anzubieten.
+     */
+    public function test_ohne_offene_artikel_ist_der_knopf_gesperrt(): void
+    {
+        [$user] = $this->familie();
+
+        $this->actingAs($user)->post('/stammdaten/produkte/grundsortiment');
+
+        $this->actingAs($user)->get('/stammdaten/produkte/grundsortiment')
+            ->assertOk()
+            ->assertSee('Es ist bereits alles vorhanden')
+            ->assertSee('disabled', false);
+    }
+
     public function test_das_grundsortiment_landet_im_katalog(): void
     {
         [$user] = $this->familie();
@@ -102,7 +151,7 @@ class GrundsortimentTest extends TestCase
 
     /**
      * Additiv und wiederholbar: Ein gepflegter Eintrag hat Vorrang vor der
-     * Vorlage. Deshalb braucht die Handlung keine Sicherheitsabfrage.
+     * Vorlage -- das ist die Zusage, die die Abfrageseite gibt.
      */
     public function test_ein_zweiter_lauf_legt_nichts_doppelt_an(): void
     {
@@ -147,7 +196,10 @@ class GrundsortimentTest extends TestCase
         $this->actingAs($kind)->post('/stammdaten/produkte/grundsortiment')->assertForbidden();
         $this->assertSame(0, $this->imKontext($owner, fn () => Product::count()));
 
-        // Und der Knopf steht für sie gar nicht erst da.
+        // Auch die Abfrageseite bleibt ihr verschlossen ...
+        $this->actingAs($kind)->get('/stammdaten/produkte/grundsortiment')->assertForbidden();
+
+        // ... und der Verweis darauf steht gar nicht erst da.
         $this->actingAs($kind)->get('/stammdaten/produkte')
             ->assertOk()->assertDontSee(route('stammdaten.produkte.grundsortiment'));
     }

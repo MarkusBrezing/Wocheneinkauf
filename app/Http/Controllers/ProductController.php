@@ -72,12 +72,28 @@ class ProductController extends Controller
     }
 
     /**
+     * Die Sicherheitsabfrage vor dem Grundsortiment.
+     *
+     * Der Vorgang legt nur an und ueberschreibt nichts -- gefragt wird
+     * trotzdem, und die Antwort ist mehr wert als ein "wirklich?": Die Seite
+     * zeigt, wie viele Artikel dazukaemen, wie sie sich auf die Warengruppen
+     * verteilen und welche vorhandenen Eintraege unangetastet bleiben.
+     */
+    public function showBasics(Request $request, ProductCatalogInstaller $installer)
+    {
+        $family = $this->currentFamily($request);
+        $this->requireAdmin($request, $family);
+
+        return view('stammdaten.grundsortiment', [
+            'vorschau' => $installer->vorschau($family, ['grundsortiment']),
+        ]);
+    }
+
+    /**
      * Grundsortiment in den Katalog laden.
      *
      * Additiv und wiederholbar: Was es unter diesem Namen schon gibt, bleibt
      * unangetastet -- ein gepflegter Eintrag hat Vorrang vor der Vorlage.
-     * Deshalb braucht die Handlung keine Sicherheitsabfrage wie das
-     * Zuruecksetzen: Sie kann nichts zerstoeren.
      */
     public function installBasics(Request $request, ProductCatalogInstaller $installer)
     {
@@ -86,8 +102,11 @@ class ProductController extends Controller
 
         $ergebnis = $installer->install($family, ['grundsortiment']);
 
-        return back()->with('status', $ergebnis['angelegt'].' Artikel angelegt'
-            .($ergebnis['vorhanden'] > 0 ? ', '.$ergebnis['vorhanden'].' waren schon da' : '').'.');
+        return redirect()->route('stammdaten.produkte.index')->with(
+            'status',
+            $ergebnis['angelegt'].' Artikel angelegt'
+                .($ergebnis['vorhanden'] > 0 ? ', '.$ergebnis['vorhanden'].' waren schon da und blieben unverändert' : '').'.'
+        );
     }
 
     public function store(Request $request, ProductCategorizer $categorizer)

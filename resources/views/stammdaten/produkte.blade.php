@@ -284,14 +284,11 @@
             aus dem Tiefkühlfach nur Rohware. Was Sie davon möchten, legen Sie selbst an;
             umgekehrt müssten Sie es wegräumen.
         </p>
-        <p class="gedaempft">
-            Der Vorgang ist <strong>additiv und wiederholbar</strong>: Ein Artikel, den es
-            unter diesem Namen schon gibt, bleibt unangetastet. Es geht nichts verloren.
+        <p>
+            <a href="{{ route('stammdaten.produkte.grundsortiment') }}" class="knopf">
+                Grundsortiment laden …
+            </a>
         </p>
-        <form method="POST" action="{{ route('stammdaten.produkte.grundsortiment') }}">
-            @csrf
-            <button type="submit">Grundsortiment in den Katalog laden</button>
-        </form>
 
         {{-- Ganz unten und schmucklos: Wer hier hinklickt, sucht es. --}}
         <h2>Stammdaten zurücksetzen</h2>
