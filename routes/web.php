@@ -282,6 +282,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/produkte/{produkt}', [ProductController::class, 'destroy'])->name('produkte.destroy');
         Route::post('/produkte/zusammenfuehren', [ProductController::class, 'merge'])->name('produkte.merge');
 
+        // Grundsortiment in den Katalog laden -- additiv, deshalb ohne
+        // Sicherheitsabfrage.
+        Route::post('/produkte/grundsortiment', [ProductController::class, 'installBasics'])->name('produkte.grundsortiment');
+
         /*
          * Stammdaten zuruecksetzen: Artikel, Warengruppen und Maerkte auf
          * einmal loeschen. Zwei Routen statt einer -- die Sicherheitsabfrage

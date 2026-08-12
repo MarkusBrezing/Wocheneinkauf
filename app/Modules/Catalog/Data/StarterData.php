@@ -237,6 +237,205 @@ class StarterData
      *
      * @return array<int, array{name: string, unit?: ?string, group?: string}>
      */
+    /**
+     * Grundsortiment eines Vierpersonenhaushalts in Deutschland.
+     *
+     * Gedacht als Startpunkt fuer den Artikelkatalog: rund 150 Artikel, die in
+     * so einem Haushalt Woche fuer Woche oder Monat fuer Monat vorkommen.
+     *
+     * **Was bewusst fehlt:** Suessigkeiten, Knabberzeug und Fertiggerichte.
+     * Der Satz laesst die Warengruppe SUESS vollstaendig aus und nimmt aus dem
+     * Tiefkuehlfach nur Rohware (Gemuese, Beeren, Kraeuter) -- keine Pizza,
+     * keine Pommes, keine Fischstaebchen. Damit ist er kein vollstaendiges
+     * Abbild eines Einkaufs, sondern eine Grundlage, die niemandem etwas
+     * unterstellt: Wer Schokolade im Katalog haben will, legt sie an; wer
+     * nicht, muss nichts wegloeschen.
+     *
+     * Grenzfaelle, die deshalb draussen bleiben, obwohl sie in vielen Haushalten
+     * stehen: Honig, Marmelade, Nussmus, Ketchup.
+     *
+     * `soll` ist die Sollmenge des Grundvorrats -- gesetzt nur bei dem, was
+     * wirklich vorraetig gehalten wird (Mehl, Reis, Konserven), nicht bei
+     * Frischware.
+     *
+     * @return array<int, array{name: string, unit?: ?string, group?: string, vorrat?: bool, soll?: float}>
+     */
+    public static function basicAssortment(): array
+    {
+        return [
+            // ── Obst und Gemuese ────────────────────────────────────────
+            ['name' => 'Äpfel', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Bananen', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Birnen', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Orangen', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Zitronen', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Weintrauben', 'unit' => 'Pck', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Kartoffeln', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Zwiebeln', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Knoblauch', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Möhren', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Tomaten', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Salatgurke', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Paprika', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Zucchini', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Brokkoli', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Blumenkohl', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Lauch', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Sellerie', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Weißkohl', 'unit' => 'Kopf', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Rotkohl', 'unit' => 'Kopf', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Kohlrabi', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Champignons', 'unit' => 'Pck', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Kopfsalat', 'unit' => 'Kopf', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Feldsalat', 'unit' => 'Pck', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Blattspinat', 'unit' => 'Pck', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Kürbis', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Süßkartoffeln', 'unit' => 'kg', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Avocado', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Ingwer', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Petersilie', 'unit' => 'Bund', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Schnittlauch', 'unit' => 'Bund', 'group' => 'OBST_GEMUESE'],
+            ['name' => 'Basilikum', 'unit' => 'Stk', 'group' => 'OBST_GEMUESE'],
+
+            // ── Backwaren ───────────────────────────────────────────────
+            ['name' => 'Mischbrot', 'unit' => 'Stk', 'group' => 'BACKWAREN'],
+            ['name' => 'Vollkornbrot', 'unit' => 'Stk', 'group' => 'BACKWAREN'],
+            ['name' => 'Brötchen', 'unit' => 'Stk', 'group' => 'BACKWAREN'],
+            ['name' => 'Toastbrot', 'unit' => 'Pck', 'group' => 'BACKWAREN'],
+            ['name' => 'Baguette', 'unit' => 'Stk', 'group' => 'BACKWAREN'],
+
+            // ── Milchprodukte ───────────────────────────────────────────
+            ['name' => 'Vollmilch', 'unit' => 'l', 'group' => 'MILCH'],
+            ['name' => 'H-Milch', 'unit' => 'l', 'group' => 'MILCH', 'vorrat' => true, 'soll' => 6],
+            ['name' => 'Butter', 'unit' => 'Pck', 'group' => 'MILCH', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Naturjoghurt', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Speisequark', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Schmand', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Saure Sahne', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Schlagsahne', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Crème fraîche', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Frischkäse', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Gouda', 'unit' => 'Pck', 'group' => 'MILCH'],
+            ['name' => 'Emmentaler', 'unit' => 'Pck', 'group' => 'MILCH'],
+            ['name' => 'Parmesan', 'unit' => 'Pck', 'group' => 'MILCH'],
+            ['name' => 'Mozzarella', 'unit' => 'Pck', 'group' => 'MILCH'],
+            ['name' => 'Feta', 'unit' => 'Pck', 'group' => 'MILCH'],
+            ['name' => 'Hüttenkäse', 'unit' => 'Becher', 'group' => 'MILCH'],
+            ['name' => 'Buttermilch', 'unit' => 'l', 'group' => 'MILCH'],
+
+            // ── Eier ────────────────────────────────────────────────────
+            ['name' => 'Eier', 'unit' => 'Stk', 'group' => 'EIER'],
+
+            // ── Fleisch und Wurst ───────────────────────────────────────
+            ['name' => 'Hackfleisch gemischt', 'unit' => 'g', 'group' => 'FLEISCH'],
+            ['name' => 'Hähnchenbrustfilet', 'unit' => 'g', 'group' => 'FLEISCH'],
+            ['name' => 'Hähnchenschenkel', 'unit' => 'Stk', 'group' => 'FLEISCH'],
+            ['name' => 'Schweineschnitzel', 'unit' => 'Stk', 'group' => 'FLEISCH'],
+            ['name' => 'Rindergulasch', 'unit' => 'g', 'group' => 'FLEISCH'],
+            ['name' => 'Bratwurst', 'unit' => 'Stk', 'group' => 'FLEISCH'],
+            ['name' => 'Kochschinken', 'unit' => 'Pck', 'group' => 'FLEISCH'],
+            ['name' => 'Salami', 'unit' => 'Pck', 'group' => 'FLEISCH'],
+            ['name' => 'Speck', 'unit' => 'Pck', 'group' => 'FLEISCH'],
+            ['name' => 'Leberwurst', 'unit' => 'Pck', 'group' => 'FLEISCH'],
+
+            // ── Fisch ───────────────────────────────────────────────────
+            ['name' => 'Lachsfilet', 'unit' => 'g', 'group' => 'FISCH'],
+            ['name' => 'Seelachsfilet', 'unit' => 'g', 'group' => 'FISCH'],
+            ['name' => 'Forelle', 'unit' => 'Stk', 'group' => 'FISCH'],
+            ['name' => 'Räucherlachs', 'unit' => 'Pck', 'group' => 'FISCH'],
+
+            // ── Tiefkuehl: nur Rohware ──────────────────────────────────
+            ['name' => 'TK-Erbsen', 'unit' => 'Pck', 'group' => 'TIEFKUEHL', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'TK-Spinat', 'unit' => 'Pck', 'group' => 'TIEFKUEHL', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'TK-Beeren', 'unit' => 'Pck', 'group' => 'TIEFKUEHL', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'TK-Kräuter', 'unit' => 'Pck', 'group' => 'TIEFKUEHL'],
+
+            // ── Konserven und Glaeser ───────────────────────────────────
+            ['name' => 'Passierte Tomaten', 'unit' => 'Pck', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 4],
+            ['name' => 'Gehackte Tomaten', 'unit' => 'Dose', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 4],
+            ['name' => 'Tomatenmark', 'unit' => 'Pck', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Mais', 'unit' => 'Dose', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Kidneybohnen', 'unit' => 'Dose', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Kichererbsen', 'unit' => 'Dose', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Thunfisch', 'unit' => 'Dose', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Gemüsebrühe', 'unit' => 'Glas', 'group' => 'KONSERVEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Gewürzgurken', 'unit' => 'Glas', 'group' => 'KONSERVEN'],
+            ['name' => 'Sauerkraut', 'unit' => 'Glas', 'group' => 'KONSERVEN'],
+            ['name' => 'Apfelmus', 'unit' => 'Glas', 'group' => 'KONSERVEN'],
+            ['name' => 'Oliven', 'unit' => 'Glas', 'group' => 'KONSERVEN'],
+
+            // ── Nudeln, Reis, Mehl ──────────────────────────────────────
+            ['name' => 'Spaghetti', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Penne', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Bandnudeln', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Reis', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Basmatireis', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Mehl', 'unit' => 'kg', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Vollkornmehl', 'unit' => 'kg', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Haferflocken', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Couscous', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Bulgur', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Rote Linsen', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Tellerlinsen', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Zucker', 'unit' => 'kg', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Speisestärke', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Backpulver', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 3],
+            ['name' => 'Trockenhefe', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 3],
+            ['name' => 'Semmelbrösel', 'unit' => 'Pck', 'group' => 'TROCKEN', 'vorrat' => true, 'soll' => 1],
+
+            // ── Gewuerze und Oele ───────────────────────────────────────
+            ['name' => 'Olivenöl', 'unit' => 'Fl', 'group' => 'GEWUERZE', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Rapsöl', 'unit' => 'Fl', 'group' => 'GEWUERZE', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Weinessig', 'unit' => 'Fl', 'group' => 'GEWUERZE', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Balsamico', 'unit' => 'Fl', 'group' => 'GEWUERZE', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Salz', 'unit' => 'Pck', 'group' => 'GEWUERZE', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Pfeffer', 'unit' => 'Pck', 'group' => 'GEWUERZE', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Paprikapulver', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Currypulver', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Kreuzkümmel', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Oregano', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Thymian', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Rosmarin', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Lorbeerblätter', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Zimt', 'unit' => 'Pck', 'group' => 'GEWUERZE'],
+            ['name' => 'Muskatnuss', 'unit' => 'Stk', 'group' => 'GEWUERZE'],
+            ['name' => 'Senf', 'unit' => 'Glas', 'group' => 'GEWUERZE'],
+            ['name' => 'Sojasauce', 'unit' => 'Fl', 'group' => 'GEWUERZE'],
+
+            // ── Getraenke ───────────────────────────────────────────────
+            ['name' => 'Mineralwasser', 'unit' => 'Kasten', 'group' => 'GETRAENKE'],
+            ['name' => 'Apfelsaft', 'unit' => 'l', 'group' => 'GETRAENKE'],
+            ['name' => 'Orangensaft', 'unit' => 'l', 'group' => 'GETRAENKE'],
+            ['name' => 'Kaffee', 'unit' => 'Pck', 'group' => 'GETRAENKE', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Schwarztee', 'unit' => 'Pck', 'group' => 'GETRAENKE'],
+            ['name' => 'Kräutertee', 'unit' => 'Pck', 'group' => 'GETRAENKE'],
+
+            // ── Haushalt ────────────────────────────────────────────────
+            ['name' => 'Spülmittel', 'unit' => 'Fl', 'group' => 'HAUSHALT', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Spülmaschinentabs', 'unit' => 'Pck', 'group' => 'HAUSHALT', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Klarspüler', 'unit' => 'Fl', 'group' => 'HAUSHALT'],
+            ['name' => 'Waschmittel', 'unit' => 'Pck', 'group' => 'HAUSHALT', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Allzweckreiniger', 'unit' => 'Fl', 'group' => 'HAUSHALT'],
+            ['name' => 'Müllbeutel', 'unit' => 'Rolle', 'group' => 'HAUSHALT', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Küchenrolle', 'unit' => 'Rolle', 'group' => 'HAUSHALT', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Toilettenpapier', 'unit' => 'Pck', 'group' => 'HAUSHALT', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Alufolie', 'unit' => 'Rolle', 'group' => 'HAUSHALT'],
+            ['name' => 'Frischhaltefolie', 'unit' => 'Rolle', 'group' => 'HAUSHALT'],
+            ['name' => 'Backpapier', 'unit' => 'Rolle', 'group' => 'HAUSHALT'],
+            ['name' => 'Schwämme', 'unit' => 'Pck', 'group' => 'HAUSHALT'],
+
+            // ── Drogerie ────────────────────────────────────────────────
+            ['name' => 'Zahnpasta', 'unit' => 'Stk', 'group' => 'DROGERIE', 'vorrat' => true, 'soll' => 2],
+            ['name' => 'Zahnbürste', 'unit' => 'Stk', 'group' => 'DROGERIE'],
+            ['name' => 'Duschgel', 'unit' => 'Fl', 'group' => 'DROGERIE'],
+            ['name' => 'Shampoo', 'unit' => 'Fl', 'group' => 'DROGERIE'],
+            ['name' => 'Handseife', 'unit' => 'Fl', 'group' => 'DROGERIE'],
+            ['name' => 'Deo', 'unit' => 'Stk', 'group' => 'DROGERIE'],
+            ['name' => 'Taschentücher', 'unit' => 'Pck', 'group' => 'DROGERIE', 'vorrat' => true, 'soll' => 1],
+            ['name' => 'Pflaster', 'unit' => 'Pck', 'group' => 'DROGERIE'],
+        ];
+    }
+
     public static function pantryStaples(): array
     {
         return [

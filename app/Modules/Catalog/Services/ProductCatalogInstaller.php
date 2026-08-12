@@ -27,7 +27,17 @@ use Illuminate\Support\Facades\DB;
  */
 class ProductCatalogInstaller
 {
-    public const SAETZE = ['vorrat', 'alltag'];
+    /** Alle Saetze, die es gibt. */
+    public const SAETZE = ['vorrat', 'alltag', 'grundsortiment'];
+
+    /**
+     * Was "ohne Angabe" bedeutet.
+     *
+     * Das Grundsortiment ist bewusst nicht dabei: Es ueberschneidet sich mit
+     * den beiden anderen und ist als *eine* geschlossene Grundlage gedacht,
+     * nicht als Zutat einer groesseren Mischung.
+     */
+    public const STANDARD = ['vorrat', 'alltag'];
 
     public function __construct(
         protected FamilyContext $context,
@@ -38,7 +48,7 @@ class ProductCatalogInstaller
      * @param  array<int, string>  $saetze
      * @return array{angelegt: int, vorhanden: int}
      */
-    public function install(Family $family, array $saetze = self::SAETZE): array
+    public function install(Family $family, array $saetze = self::STANDARD): array
     {
         return $this->context->runFor($family->getKey(), function () use ($saetze) {
             return DB::transaction(function () use ($saetze) {
@@ -84,11 +94,19 @@ class ProductCatalogInstaller
             }
         }
 
+        // Das Grundsortiment bringt seine Kennzeichnung selbst mit: Es weiss,
+        // was davon in den Schrank gehoert und in welcher Menge.
+        if (in_array('grundsortiment', $saetze, true)) {
+            foreach (StarterData::basicAssortment() as $eintrag) {
+                $eintraege[] = $eintrag;
+            }
+        }
+
         return $eintraege;
     }
 
     /**
-     * @param  array{name: string, unit?: ?string, group?: string, vorrat?: bool}  $eintrag
+     * @param  array{name: string, unit?: ?string, group?: string, vorrat?: bool, soll?: float}  $eintrag
      */
     protected function anlegen(array $eintrag): Product
     {
@@ -96,6 +114,10 @@ class ProductCatalogInstaller
             'name' => $eintrag['name'],
             'default_unit' => $eintrag['unit'] ?? null,
             'is_pantry_staple' => $eintrag['vorrat'] ?? false,
+            // Ohne Sollmenge waere das Kennzeichen "Grundvorrat" nur eine
+            // Behauptung: Die Bestandsaufnahme koennte nicht ausrechnen, was
+            // fehlt.
+            'pantry_target_amount' => $eintrag['soll'] ?? null,
         ]);
 
         // Ausdrueckliche Warengruppe nur dort, wo die Stichwortregeln nichts

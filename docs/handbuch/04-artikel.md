@@ -20,6 +20,16 @@ Der Katalog ist die **gemeinsame Klammer**: Ein Eintrag auf der Einkaufsliste, e
 
 Sie müssen den Katalog nicht vorab füllen. Er wächst mit: Was Sie auf die Liste schreiben, kennt er beim nächsten Mal.
 
+## Grundsortiment laden
+
+Sie müssen nicht bei null anfangen. **Grundsortiment in den Katalog laden** legt rund 150 Artikel an, wie sie in einem deutschen Vierpersonenhaushalt vorkommen — Obst und Gemüse, Backwaren, Milchprodukte, Fleisch und Fisch, Vorratsware, Gewürze, Getränke, Haushalt und Drogerie. Bei allem, was vorrätig gehalten wird, ist zugleich eine Sollmenge für den Grundvorrat hinterlegt.
+
+**Nicht dabei sind Süßigkeiten, Knabberzeug und Fertiggerichte**; aus dem Tiefkühlfach nur Rohware wie Erbsen, Spinat und Beeren. Auch Honig, Marmelade und Ketchup fehlen — Grenzfälle, die wir lieber Ihnen überlassen. Der Gedanke dahinter: Was Sie möchten, legen Sie in einer Minute selbst an; was Sie nicht möchten, müssten Sie sonst einzeln wegräumen.
+
+> Der Vorgang ist **additiv und wiederholbar**. Ein Artikel, den es unter diesem Namen schon gibt, bleibt unangetastet — auch seine Einheit und Warengruppe. Es geht nichts verloren, deshalb gibt es hier auch keine Sicherheitsabfrage.
+
+Laden dürfen nur Inhaber und Administratoren.
+
 ## Die Artikelliste
 
 Die Seite ist für die Pflege am PC gebaut — eine Tabelle mit abwechselnd eingefärbten Zeilen, Filter über der Tabelle, Sortierung per Spaltenkopf.

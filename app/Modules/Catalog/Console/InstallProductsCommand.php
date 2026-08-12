@@ -18,13 +18,13 @@ class InstallProductsCommand extends Command
 {
     protected $signature = 'catalog:install-products
                             {--family= : public_id einer einzelnen Familie; ohne Angabe alle}
-                            {--satz=* : vorrat, alltag; ohne Angabe beide}';
+                            {--satz=* : vorrat, alltag, grundsortiment; ohne Angabe vorrat und alltag}';
 
     protected $description = 'Legt gängige Artikel im Katalog an (Grundvorrat und Alltagsartikel)';
 
     public function handle(ProductCatalogInstaller $installer): int
     {
-        $saetze = $this->option('satz') ?: ProductCatalogInstaller::SAETZE;
+        $saetze = $this->option('satz') ?: ProductCatalogInstaller::STANDARD;
         $unbekannt = array_diff($saetze, ProductCatalogInstaller::SAETZE);
 
         if ($unbekannt !== []) {

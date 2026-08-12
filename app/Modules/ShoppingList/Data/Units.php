@@ -31,6 +31,7 @@ class Units
         'glas' => 'Glas', 'gläser' => 'Glas', 'glaeser' => 'Glas',
         'flasche' => 'Fl', 'flaschen' => 'Fl', 'fl' => 'Fl',
         'becher' => 'Becher',
+        'kasten' => 'Kasten', 'kästen' => 'Kasten', 'kaesten' => 'Kasten',
         'beutel' => 'Beutel', 'tüte' => 'Beutel', 'tueten' => 'Beutel', 'tüten' => 'Beutel',
         'bund' => 'Bund',
         'kopf' => 'Kopf', 'köpfe' => 'Kopf',

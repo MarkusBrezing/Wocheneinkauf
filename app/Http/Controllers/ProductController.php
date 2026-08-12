@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Catalog\Models\ProductGroup;
+use App\Modules\Catalog\Services\ProductCatalogInstaller;
 use App\Modules\Catalog\Services\ProductCategorizer;
 use App\Modules\Catalog\Services\ProductMerger;
 use App\Modules\Markets\Models\Market;
@@ -68,6 +69,25 @@ class ProductController extends Controller
             // Nur wer die Familie verwaltet, sieht den Weg zum Zuruecksetzen.
             'darfVerwalten' => $request->user()->administers($request->user()->currentFamily),
         ]);
+    }
+
+    /**
+     * Grundsortiment in den Katalog laden.
+     *
+     * Additiv und wiederholbar: Was es unter diesem Namen schon gibt, bleibt
+     * unangetastet -- ein gepflegter Eintrag hat Vorrang vor der Vorlage.
+     * Deshalb braucht die Handlung keine Sicherheitsabfrage wie das
+     * Zuruecksetzen: Sie kann nichts zerstoeren.
+     */
+    public function installBasics(Request $request, ProductCatalogInstaller $installer)
+    {
+        $family = $this->currentFamily($request);
+        $this->requireAdmin($request, $family);
+
+        $ergebnis = $installer->install($family, ['grundsortiment']);
+
+        return back()->with('status', $ergebnis['angelegt'].' Artikel angelegt'
+            .($ergebnis['vorhanden'] > 0 ? ', '.$ergebnis['vorhanden'].' waren schon da' : '').'.');
     }
 
     public function store(Request $request, ProductCategorizer $categorizer)

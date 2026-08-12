@@ -262,7 +262,37 @@
         <button type="submit" style="margin:0">Zusammenführen</button>
     </form>
 
+    @if ($darfVerwalten && $gesamt === 0)
+        {{-- Der leere Katalog ist der Moment, in dem das Grundsortiment hilft
+             -- deshalb steht der Hinweis dann oben statt am Seitenende. --}}
+        <div class="hinweis">
+            <strong>Der Katalog ist noch leer.</strong>
+            Ein Grundsortiment für einen Vierpersonenhaushalt spart die ersten hundert Einträge —
+            siehe unten.
+        </div>
+    @endif
+
     @if ($darfVerwalten)
+        <h2>Grundsortiment laden</h2>
+        <p class="gedaempft">
+            Legt rund 150 Artikel an, wie sie in einem deutschen Vierpersonenhaushalt
+            vorkommen: Obst und Gemüse, Backwaren, Milchprodukte, Fleisch und Fisch,
+            Vorratsware, Gewürze, Getränke, Haushalt und Drogerie. Bei Vorratsware ist
+            zugleich eine Sollmenge für den Grundvorrat hinterlegt.
+            <br>
+            <strong>Nicht dabei:</strong> Süßigkeiten, Knabberzeug und Fertiggerichte —
+            aus dem Tiefkühlfach nur Rohware. Was Sie davon möchten, legen Sie selbst an;
+            umgekehrt müssten Sie es wegräumen.
+        </p>
+        <p class="gedaempft">
+            Der Vorgang ist <strong>additiv und wiederholbar</strong>: Ein Artikel, den es
+            unter diesem Namen schon gibt, bleibt unangetastet. Es geht nichts verloren.
+        </p>
+        <form method="POST" action="{{ route('stammdaten.produkte.grundsortiment') }}">
+            @csrf
+            <button type="submit">Grundsortiment in den Katalog laden</button>
+        </form>
+
         {{-- Ganz unten und schmucklos: Wer hier hinklickt, sucht es. --}}
         <h2>Stammdaten zurücksetzen</h2>
         <p class="gedaempft">
