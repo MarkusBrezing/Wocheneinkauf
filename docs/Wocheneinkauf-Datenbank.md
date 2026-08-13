@@ -1,6 +1,6 @@
 # Wocheneinkauf · Datenbankdokumentation
 
-**Stand:** 05.08.2026 · **Schema:** `wocheneinkauf` · **37 Tabellen**
+**Stand:** 13.08.2026 · **Schema:** `wocheneinkauf` · **35 Tabellen**
 
 > Struktur, Typen, Schlüssel und Indizes dieses Dokuments sind aus `information_schema` erzeugt und können deshalb nicht von der laufenden Datenbank abweichen. Die Erläuterungen sind von Hand geschrieben.
 
@@ -40,13 +40,12 @@ Sichtbar wird Ebene 2 an den UNIQUE-Schlüsseln über `(id, family_id)`: Sie seh
 
 ### 1.4 Regeln, die die Datenbank selbst durchsetzt
 
-Drei Zusagen der Anwendung stehen nicht im Code, sondern im Schema -- der Code könnte sie unter gleichzeitigen Zugriffen sonst verletzen:
+Zwei Zusagen der Anwendung stehen nicht im Code, sondern im Schema -- der Code könnte sie unter gleichzeitigen Zugriffen sonst verletzen:
 
 | Regel | Umsetzung |
 |---|---|
 | Höchstens **eine aktive Einkaufsliste** je Familie | Generierte Spalte `shopping_lists.aktiv_marker` (1 bei `active`, sonst NULL) plus UNIQUE `(family_id, aktiv_marker)`. NULL zählt im UNIQUE nicht mit, deshalb sind beliebig viele archivierte Listen erlaubt. |
-| Höchstens **eine offene Inventur** je Familie | Dasselbe Muster mit `inventories.offen_marker`. |
-| Abweichung einer Inventurzeile | Generierte Spalte `inventory_lines.difference` = gezählt − erwartet. Von der Datenbank gerechnet, damit sie nicht auseinanderlaufen kann. |
+| Kein Eintrag in fremder Liste | Verbund-Fremdschlüssel `(list_id, family_id)` -- dasselbe Muster auf allen Untertabellen. |
 
 ---
 
@@ -58,7 +57,7 @@ Drei Zusagen der Anwendung stehen nicht im Code, sondern im Schema -- der Code k
 | **Stammdaten** | `product_groups`, `product_group_rules`, `products`, `markets`, `market_sections`, `market_section_groups`, `market_product` |
 | **Einkaufsliste** | `shopping_lists`, `shopping_list_items`, `list_templates`, `list_template_items` |
 | **Rezepte** | `recipes`, `recipe_ingredients`, `tags`, `recipe_tag` |
-| **Vorrat und Inventur** | `pantry_items`, `pantry_movements`, `inventories`, `inventory_lines` |
+| **Vorrat** | `pantry_items`, `pantry_movements` |
 | **Wochenplan** | `meal_plans`, `meal_plan_slots`, `meal_plan_suggestions` |
 | **Technische Tabellen des Frameworks** | `sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations` |
 
@@ -92,8 +91,6 @@ erDiagram
     tags ||--o{ recipe_tag : ""
     products ||--o{ pantry_items : "liegt im Vorrat"
     pantry_items ||--o{ pantry_movements : "Buchungen"
-    inventories ||--o{ inventory_lines : "Zählzeilen"
-    pantry_items ||--o{ inventory_lines : "gezählt wird"
     families ||--o{ meal_plans : ""
     meal_plans ||--o{ meal_plan_slots : "Plätze"
     recipes ||--o| meal_plan_slots : "belegt mit"
@@ -570,9 +567,9 @@ Zuordnung Rezept ↔ Schlagwort.
 
 *Fremdschlüssel:* (`recipe_id`, `family_id`) → `recipes`  *(Verbund)* beim Löschen: cascade · (`tag_id`, `family_id`) → `tags`  *(Verbund)* beim Löschen: cascade
 
-### 3.5 Vorrat und Inventur
+### 3.5 Vorrat
 
-Der Grundvorrat am Artikel ist die *Absicht* (`products.pantry_target_amount`), `pantry_items` ist die *Wirklichkeit*: was tatsächlich wo liegt. Jede Änderung daran ist eine Buchung.
+Der Grundvorrat am Artikel ist die *Absicht* (`products.pantry_target_amount`), `pantry_items` ist die *Wirklichkeit*: was tatsächlich wo liegt. Jede Änderung daran ist eine Buchung. Gezählt wird über die Bestandsaufnahme, die ohne eigene Tabellen auskommt -- ihr Ergebnis ist die Einkaufsliste.
 
 #### `pantry_items`
 
@@ -609,8 +606,8 @@ Jede Bestandsänderung als eigene Zeile. Kostet Platz und beantwortet dafür die
 | `family_id` | `bigint(20) unsigned` | — | — |  |
 | `pantry_item_id` | `bigint(20) unsigned` | — | — |  |
 | `qty_delta` | `decimal(10,3)` | — | — | Die Änderung, nicht der neue Stand. Gebucht wird, was **tatsächlich** passiert ist: Wer 3 kg verbraucht, aber nur 2 kg im System hatte, erzeugt −2 und nicht −3. Sonst summieren sich die Bewegungen nicht mehr zum Bestand. |
-| `reason` | `enum('purchase','consumption','inventory','correction','expired')` | — | — | Zugang, Verbrauch, Inventur, Korrektur, Verfall. |
-| `ref_type` | `varchar(40)` | ja | `NULL` | Auslöser, etwa `inventory` mit der ID des Laufs. |
+| `reason` | `enum('purchase','consumption','inventory','correction','expired')` | — | — | Zugang, Verbrauch, Korrektur, Verfall. Der Wert `inventory` stammt aus dem entfernten Inventurlauf und wird nicht mehr vergeben -- er bleibt im Aufzählungstyp, weil alte Buchungen ihn tragen könnten. |
+| `ref_type` | `varchar(40)` | ja | `NULL` | Auslöser einer Buchung, sofern sie nicht von Hand kam. |
 | `ref_id` | `bigint(20) unsigned` | ja | `NULL` |  |
 | `created_by` | `bigint(20) unsigned` | ja | `NULL` |  |
 | `created_at` | `timestamp` | — | `current_timestamp()` |  |
@@ -618,53 +615,6 @@ Jede Bestandsänderung als eigene Zeile. Kostet Platz und beantwortet dafür die
 *Schlüssel und Indizes:* **Index** (`created_by`) · **Index** (`family_id`, `created_at`) · **Index** (`pantry_item_id`, `created_at`) · **Index** (`pantry_item_id`, `family_id`) · **Primärschlüssel** (`id`)
 
 *Fremdschlüssel:* (`created_by`) → `users`  beim Löschen: set null · (`family_id`) → `families`  beim Löschen: cascade · (`pantry_item_id`, `family_id`) → `pantry_items`  *(Verbund)* beim Löschen: cascade
-
-#### `inventories`
-
-Ein Inventurlauf. Drei Zustände, zwei Ausgänge: zählen, dann abschließen **oder** abbrechen.
-
-| Spalte | Typ | Null | Vorgabe | Erläuterung |
-|---|---|:---:|---|---|
-| `id` | `bigint(20) unsigned` | — | — |  |
-| `public_id` | `char(26)` | — | — |  |
-| `family_id` | `bigint(20) unsigned` | — | — |  |
-| `title` | `varchar(120)` | ja | `NULL` |  |
-| `scope` | `enum('full','location','selection')` | — | `'full'` | Ganzer Vorrat, ein Ort oder eine Auswahl. |
-| `scope_value` | `varchar(80)` | ja | `NULL` |  |
-| `status` | `enum('open','completed','cancelled')` | — | `'open'` |  |
-| `started_by` | `bigint(20) unsigned` | ja | `NULL` |  |
-| `started_at` | `timestamp` | — | `current_timestamp()` |  |
-| `completed_at` | `timestamp` | ja | `NULL` | Gesetzt bei Abschluss *und* bei Abbruch -- der Lauf ist in beiden Fällen vorbei. |
-| `note` | `varchar(255)` | ja | `NULL` |  |
-| `offen_marker` | `tinyint(3) unsigned` | ja | *berechnet* | Generierte Spalte wie bei der Einkaufsliste: erzwingt zusammen mit dem UNIQUE **höchstens eine offene Inventur je Familie**. |
-
-*Schlüssel und Indizes:* **UNIQUE** (`family_id`, `offen_marker`) · **Index** (`family_id`, `status`, `started_at`) · **UNIQUE** (`id`, `family_id`) · **UNIQUE** (`public_id`) · **Index** (`started_by`) · **Primärschlüssel** (`id`)
-
-*Fremdschlüssel:* (`family_id`) → `families`  beim Löschen: cascade · (`started_by`) → `users`  beim Löschen: set null
-
-> Ein abgebrochener Lauf lässt die Bestände unangetastet. Das ist die Zusage, die es braucht, damit jemand überhaupt anfängt zu zählen.
-
-#### `inventory_lines`
-
-Eine Zeile je Vorratsposition. Sie entstehen **beim Start** des Laufs, nicht beim Zählen.
-
-| Spalte | Typ | Null | Vorgabe | Erläuterung |
-|---|---|:---:|---|---|
-| `id` | `bigint(20) unsigned` | — | — |  |
-| `family_id` | `bigint(20) unsigned` | — | — |  |
-| `inventory_id` | `bigint(20) unsigned` | — | — |  |
-| `pantry_item_id` | `bigint(20) unsigned` | — | — |  |
-| `expected_qty` | `decimal(10,3)` | — | `0.000` | Der Bestand zum Zeitpunkt des Starts, eingefroren. Würde man ihn erst beim Zählen festhalten, wäre die Abweichung hinterher nicht mehr berechenbar. |
-| `counted_qty` | `decimal(10,3)` | ja | `NULL` | Die gezählte Menge. **NULL heißt „noch nicht gezählt"** -- und ungezählte Zeilen rührt der Abschluss nicht an. Eine Inventur, die Ungezähltes auf null setzt, wäre gefährlicher als gar keine. |
-| `target_qty` | `decimal(10,3)` | — | `0.000` |  |
-| `difference` | `decimal(10,3)` | ja | *berechnet* | Generierte Spalte: gezählt minus erwartet. Von der Datenbank gerechnet, damit sie nicht auseinanderlaufen kann. |
-| `counted_by` | `bigint(20) unsigned` | ja | `NULL` |  |
-| `counted_at` | `timestamp` | ja | `NULL` |  |
-| `note` | `varchar(160)` | ja | `NULL` |  |
-
-*Schlüssel und Indizes:* **Index** (`counted_by`) · **Index** (`family_id`) · **Index** (`inventory_id`, `family_id`) · **UNIQUE** (`inventory_id`, `pantry_item_id`) · **Index** (`pantry_item_id`, `family_id`) · **Primärschlüssel** (`id`)
-
-*Fremdschlüssel:* (`counted_by`) → `users`  beim Löschen: set null · (`family_id`) → `families`  beim Löschen: cascade · (`inventory_id`, `family_id`) → `inventories`  *(Verbund)* beim Löschen: cascade · (`pantry_item_id`, `family_id`) → `pantry_items`  *(Verbund)* beim Löschen: cascade
 
 ### 3.6 Wochenplan
 
@@ -859,11 +809,11 @@ Welche Schemaänderungen gelaufen sind. Der Health-Check liest sie, um ein halb 
 
 | Kennzahl | Wert |
 |---|---:|
-| Tabellen | 37 |
-| Spalten | 309 |
-| Fremdschlüssel | 60 |
-| Schlüssel und Indizes | 139 |
-| Generierte Spalten | 3 |
+| Tabellen | 35 |
+| Spalten | 286 |
+| Fremdschlüssel | 54 |
+| Schlüssel und Indizes | 127 |
+| Generierte Spalten | 1 |
 
 ### 4.2 Dokument neu erzeugen
 

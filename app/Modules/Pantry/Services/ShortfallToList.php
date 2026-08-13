@@ -3,7 +3,6 @@
 namespace App\Modules\Pantry\Services;
 
 use App\Core\Models\User;
-use App\Modules\Pantry\Models\Inventory;
 use App\Modules\Pantry\Models\PantryItem;
 use App\Modules\ShoppingList\Data\ParsedItem;
 use App\Modules\ShoppingList\Models\ShoppingListItem;
@@ -14,9 +13,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Fehlmengen gesammelt auf die Einkaufsliste (E-09).
  *
- * Der eigentliche Zweck der ganzen Inventur: Am Ende steht nicht ein Bericht,
- * sondern eine Liste. Gerechnet wird Soll minus Ist -- was darueber liegt,
- * bleibt im Schrank und nicht auf dem Zettel.
+ * Gerechnet wird Soll minus Ist -- was darueber liegt, bleibt im Schrank und
+ * nicht auf dem Zettel.
  */
 class ShortfallToList
 {
@@ -36,43 +34,16 @@ class ShortfallToList
             ->orderBy('location')->orderBy('sort')
             ->get();
 
-        return $this->uebernehmen($positionen, $user, 'pantry', null);
-    }
-
-    /**
-     * Dasselbe aus einer abgeschlossenen Inventur heraus: Grundlage ist dann
-     * die gezaehlte Menge, nicht der laufende Bestand.
-     *
-     * @return array<int, string>
-     */
-    public function fromInventory(Inventory $inventur, ?User $user = null): array
-    {
-        $positionen = $inventur->lines()
-            ->whereNotNull('counted_qty')
-            ->with('pantryItem.product')
-            ->get()
-            ->map(function ($zeile) {
-                $item = $zeile->pantryItem;
-
-                // Der Bestand der Position ist nach dem Abschluss bereits die
-                // gezaehlte Menge -- vor dem Abschluss nicht. Deshalb hier die
-                // Zeile als Wahrheit nehmen.
-                $item->setAttribute('current_qty', $zeile->counted_qty);
-                $item->setAttribute('target_qty', $zeile->target_qty);
-
-                return $item;
-            });
-
-        return $this->uebernehmen($positionen, $user, 'inventory', $inventur->getKey());
+        return $this->uebernehmen($positionen, $user);
     }
 
     /**
      * @param  Collection<int, PantryItem>  $positionen
      * @return array<int, string>
      */
-    protected function uebernehmen($positionen, ?User $user, string $refType, ?int $refId): array
+    protected function uebernehmen($positionen, ?User $user): array
     {
-        return DB::transaction(function () use ($positionen, $user, $refId) {
+        return DB::transaction(function () use ($positionen, $user) {
             $liste = $this->manager->current($user);
             $uebernommen = [];
 
@@ -91,7 +62,7 @@ class ShortfallToList
                         unit: $item->unit ?? $item->product->default_unit,
                     ),
                     source: 'pantry',
-                    sourceRefId: $refId ?? $item->getKey(),
+                    sourceRefId: $item->getKey(),
                     productId: $item->product_id,
                     productGroupId: $item->product->product_group_id,
                 );

@@ -42,7 +42,7 @@
         <a href="{{ route('wochenplan.index') }}" class="knopf knopf-schlicht">Wochenplan</a>
         <a href="{{ route('rezepte.index') }}" class="knopf knopf-schlicht">Rezepte</a>
         <a href="{{ route('vorrat.index') }}" class="knopf knopf-schlicht">Vorrat</a>
-        <a href="{{ route('vorrat.inventur.index') }}" class="knopf knopf-schlicht">Inventur</a>
+        <a href="{{ route('einkaufsliste.inventur') }}" class="knopf knopf-schlicht">Bestandsaufnahme</a>
     </p>
 
     <h2>Hilfe</h2>

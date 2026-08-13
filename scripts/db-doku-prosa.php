@@ -26,9 +26,9 @@ return [
             'einleitung' => 'Rezepte mit Zutaten und Schlagworten. Die Zutat kennt drei Namen: den Originaltext, den Einkaufsnamen und den Sammelbegriff -- daran hängt die Übernahme auf die Einkaufsliste.',
             'tabellen' => ['recipes', 'recipe_ingredients', 'tags', 'recipe_tag'],
         ],
-        'Vorrat und Inventur' => [
-            'einleitung' => 'Der Grundvorrat am Artikel ist die *Absicht* (`products.pantry_target_amount`), `pantry_items` ist die *Wirklichkeit*: was tatsächlich wo liegt. Jede Änderung daran ist eine Buchung.',
-            'tabellen' => ['pantry_items', 'pantry_movements', 'inventories', 'inventory_lines'],
+        'Vorrat' => [
+            'einleitung' => 'Der Grundvorrat am Artikel ist die *Absicht* (`products.pantry_target_amount`), `pantry_items` ist die *Wirklichkeit*: was tatsächlich wo liegt. Jede Änderung daran ist eine Buchung. Gezählt wird über die Bestandsaufnahme, die ohne eigene Tabellen auskommt -- ihr Ergebnis ist die Einkaufsliste.',
+            'tabellen' => ['pantry_items', 'pantry_movements'],
         ],
         'Wochenplan' => [
             'einleitung' => 'Ein Plan je Familie und Woche, sieben Tage als feste Plätze. Leere Plätze sind Datensätze und keine Lücken -- nur so lassen sie sich sperren und einzeln neu würfeln.',
@@ -238,27 +238,8 @@ return [
             'zweck' => 'Jede Bestandsänderung als eigene Zeile. Kostet Platz und beantwortet dafür die Frage, wo die Vorräte geblieben sind.',
             'spalten' => [
                 'qty_delta' => 'Die Änderung, nicht der neue Stand. Gebucht wird, was **tatsächlich** passiert ist: Wer 3 kg verbraucht, aber nur 2 kg im System hatte, erzeugt −2 und nicht −3. Sonst summieren sich die Bewegungen nicht mehr zum Bestand.',
-                'reason' => 'Zugang, Verbrauch, Inventur, Korrektur, Verfall.',
-                'ref_type' => 'Auslöser, etwa `inventory` mit der ID des Laufs.',
-            ],
-        ],
-        'inventories' => [
-            'zweck' => 'Ein Inventurlauf. Drei Zustände, zwei Ausgänge: zählen, dann abschließen **oder** abbrechen.',
-            'spalten' => [
-                'scope' => 'Ganzer Vorrat, ein Ort oder eine Auswahl.',
-                'offen_marker' => 'Generierte Spalte wie bei der Einkaufsliste: erzwingt zusammen mit dem UNIQUE **höchstens eine offene Inventur je Familie**.',
-                'completed_at' => 'Gesetzt bei Abschluss *und* bei Abbruch -- der Lauf ist in beiden Fällen vorbei.',
-            ],
-            'besonderheiten' => [
-                'Ein abgebrochener Lauf lässt die Bestände unangetastet. Das ist die Zusage, die es braucht, damit jemand überhaupt anfängt zu zählen.',
-            ],
-        ],
-        'inventory_lines' => [
-            'zweck' => 'Eine Zeile je Vorratsposition. Sie entstehen **beim Start** des Laufs, nicht beim Zählen.',
-            'spalten' => [
-                'expected_qty' => 'Der Bestand zum Zeitpunkt des Starts, eingefroren. Würde man ihn erst beim Zählen festhalten, wäre die Abweichung hinterher nicht mehr berechenbar.',
-                'counted_qty' => 'Die gezählte Menge. **NULL heißt „noch nicht gezählt"** -- und ungezählte Zeilen rührt der Abschluss nicht an. Eine Inventur, die Ungezähltes auf null setzt, wäre gefährlicher als gar keine.',
-                'difference' => 'Generierte Spalte: gezählt minus erwartet. Von der Datenbank gerechnet, damit sie nicht auseinanderlaufen kann.',
+                'reason' => 'Zugang, Verbrauch, Korrektur, Verfall. Der Wert `inventory` stammt aus dem entfernten Inventurlauf und wird nicht mehr vergeben -- er bleibt im Aufzählungstyp, weil alte Buchungen ihn tragen könnten.',
+                'ref_type' => 'Auslöser einer Buchung, sofern sie nicht von Hand kam.',
             ],
         ],
 

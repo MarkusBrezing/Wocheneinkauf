@@ -1,6 +1,6 @@
-# Vorrat und Inventur
+# Vorrat und Bestandsaufnahme
 
-*Seitenart: 🖥▤ PC und Tablet · Adressen: `/vorrat`, `/vorrat/inventur/uebersicht`*
+*Seitenart: 🖥▤ PC und Tablet · Adressen: `/vorrat`, `/einkaufsliste/inventur`*
 
 ## Zwei Dinge, die man auseinanderhalten sollte
 
@@ -34,24 +34,23 @@ Der Bestand geht nie unter null. Wer 3 kg verbraucht, aber nur 2 kg im System ha
 
 **Auf die Einkaufsliste** rechnet Soll minus Ist und setzt die Differenz auf die aktuelle Liste. Was über dem Soll liegt, bleibt im Schrank.
 
-## Die Inventur
+## Die Bestandsaufnahme
 
-Eine Inventur ist ein **Lauf** mit klarem Anfang und Ende. Es gibt immer nur einen offenen je Familie.
+Der schnelle Weg, und der einzige, den es braucht: **Vorrat › Bestandsaufnahme**.
 
-```
-starten  →  zählen (beliebig oft, auch zu mehreren)  →  abschließen
-                                                     ↘  abbrechen
-```
+Die Seite listet jeden Artikel mit dem Kennzeichen **Grundvorrat**, dazu seine Sollmenge und ein leeres Feld. Sie gehen mit dem Tablet an den Schrank, tragen ein, was noch da ist, und schicken ab. Die Differenz zur Sollmenge steht danach auf der Einkaufsliste — zusammengeführt mit dem, was schon darauf steht.
 
-**Starten.** Umfang wählen: alles, ein Ort oder eine Auswahl. Beim Start friert die Anwendung Ist und Soll ein — nur so lässt sich die Abweichung später überhaupt berechnen.
+| Eingabe | Bedeutung |
+|---|---|
+| **Feld leer** | nicht gezählt — es passiert nichts |
+| **0** | nichts mehr da — die volle Sollmenge kommt auf die Liste |
+| **Kästchen „fehlt"** | für Artikel ohne Sollmenge, bei denen sich nichts rechnen lässt |
 
-**Zählen.** Sie können sich Zeit lassen und zu mehreren arbeiten; jede Zeile merkt sich, wer sie wann gezählt hat.
+> Der Unterschied zwischen leerem Feld und 0 ist der wichtigste auf der Seite. Wer die Zählung unterbricht, findet seine Liste sonst voller Artikel, die er nie geprüft hat.
 
-> **Ein leeres Feld heißt „noch nicht gezählt", eine 0 heißt „nichts mehr da".** Der Unterschied ist wichtig: Ungezählte Positionen rührt der Abschluss nicht an.
+Die Seite lässt sich ausdrucken; dann wird die Bestandsspalte zur Schreiblinie.
 
-**Abschließen.** Die gezählten Mengen werden zum neuen Bestand — jede über eine Buchung mit dem Grund „Inventur". Danach zeigt der Bericht alle Abweichungen und bietet an, die Fehlmengen auf die Einkaufsliste zu setzen.
-
-**Abbrechen.** Die Bestände bleiben, wie sie waren. Das ist die Zusage, die es braucht, damit man überhaupt anfängt zu zählen.
+Sie schreibt **nichts** in den Vorrat zurück. Es entsteht keine Zählhistorie — das Ergebnis ist die Einkaufsliste, sonst nichts. Deshalb kann man jederzeit abbrechen: Was nicht ausgefüllt ist, existiert für sie nicht.
 
 ## Haltbarkeit
 

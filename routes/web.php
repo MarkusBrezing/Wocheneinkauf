@@ -4,7 +4,6 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FamilyController;
 use App\Http\Controllers\HandbuchController;
-use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListTemplateController;
@@ -150,7 +149,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     /*
-     * Vorrat und Inventur (E-01 … E-11).
+     * Vorrat (E-01, E-02, E-09, E-10, E-11).
      */
     Route::prefix('vorrat')->name('vorrat.')->group(function () {
         Route::get('/', [PantryController::class, 'index'])->name('index');
@@ -161,14 +160,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{position}/verlauf', [PantryController::class, 'movements'])->name('verlauf');
         Route::post('/auf-die-liste', [PantryController::class, 'toList'])->name('auf-die-liste');
 
-        // Inventurlauf (E-03 … E-10)
-        Route::get('/inventur/uebersicht', [InventoryController::class, 'index'])->name('inventur.index');
-        Route::post('/inventur', [InventoryController::class, 'store'])->name('inventur.store');
-        Route::get('/inventur/{inventur}', [InventoryController::class, 'show'])->name('inventur.show');
-        Route::put('/inventur/zeile/{zeile}', [InventoryController::class, 'count'])->name('inventur.zaehlen');
-        Route::post('/inventur/{inventur}/abschliessen', [InventoryController::class, 'complete'])->name('inventur.abschliessen');
-        Route::post('/inventur/{inventur}/abbrechen', [InventoryController::class, 'cancel'])->name('inventur.abbrechen');
-        Route::post('/inventur/{inventur}/auf-die-liste', [InventoryController::class, 'toList'])->name('inventur.auf-die-liste');
     });
 
     /*

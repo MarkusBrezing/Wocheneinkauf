@@ -32,9 +32,9 @@ Dann fehlt der Empfang. Die Liste bleibt ohne Netz **lesbar**, das Abhaken brauc
 
 Der Generator kennt zu wenige Rezepte oder zu wenig Abwechslung in den Schlagworten. Tragen Sie an den Rezepten **Protein** und **Küche** ein — daran macht er die Abwechslung fest. Einzelne Gerichte lassen sich über die Historie dauerhaft ausschließen.
 
-## „Die Inventur hat Bestände gelöscht."
+## „Die Bestandsaufnahme hat meinen Vorrat verändert."
 
-Das kann sie nicht: Ungezählte Zeilen bleiben unangetastet, und ein abgebrochener Lauf ändert gar nichts. Was Sie sehen, ist wahrscheinlich eine 0, die als „nichts mehr da" eingetragen wurde — im Verlauf der Position steht, wer wann gebucht hat.
+Kann sie nicht: Sie schreibt ausschließlich auf die Einkaufsliste und rührt die Bestände nicht an. Was Sie sehen, stammt aus einer Buchung — im Verlauf der Vorratsposition steht, wer wann gebucht hat.
 
 ## „Ich habe versehentlich einen Einkauf abgeschlossen."
 

@@ -128,13 +128,8 @@ class Navigation
                         'treffer' => ['vorrat.index', 'vorrat.store', 'vorrat.update', 'vorrat.destroy', 'vorrat.buchen', 'vorrat.verlauf', 'vorrat.auf-die-liste'],
                     ],
                     [
-                        'label' => 'Inventur',
-                        'route' => 'vorrat.inventur.index',
-                        // Gezaehlt wird vor dem Schrank, nicht am Schreibtisch.
-                        'geraet' => 'tablet',
-                        'treffer' => ['vorrat.inventur'],
-                    ],
-                    [
+                        // Zaehlen geschieht vor dem Schrank, nicht am
+                        // Schreibtisch.
                         'label' => 'Bestandsaufnahme',
                         'route' => 'einkaufsliste.inventur',
                         'geraet' => 'tablet',

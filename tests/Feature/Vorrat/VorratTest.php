@@ -7,7 +7,6 @@ use App\Core\Models\User;
 use App\Core\Services\FamilyProvisioner;
 use App\Core\Support\FamilyContext;
 use App\Modules\Catalog\Models\Product;
-use App\Modules\Pantry\Models\Inventory;
 use App\Modules\Pantry\Models\PantryItem;
 use App\Modules\Pantry\Models\PantryMovement;
 use App\Modules\Pantry\Services\PantryManager;
@@ -21,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Vorrat und Inventur: E-01 bis E-11.
+ * Vorrat: E-01, E-02, E-09, E-10, E-11.
  */
 class VorratTest extends TestCase
 {
@@ -142,176 +141,6 @@ class VorratTest extends TestCase
         $this->assertSame(['Mehl'], $eintraege->pluck('raw_name')->all());
         $this->assertSame('2.000', $eintraege->first()->amount);
         $this->assertSame('pantry', $eintraege->first()->source);
-    }
-
-    public function test_inventur_starten_friert_soll_und_ist_ein(): void
-    {
-        [$user] = $this->familie();
-        $position = $this->position($user, 'Mehl', bestand: 2, soll: 3);
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full'])
-            ->assertRedirect()->assertSessionHasNoErrors();
-
-        $zeile = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail()->lines()->firstOrFail());
-
-        $this->assertSame('2.000', $zeile->expected_qty);
-        $this->assertSame('3.000', $zeile->target_qty);
-        $this->assertNull($zeile->counted_qty, 'Noch nicht gezählt.');
-
-        // Der eingefrorene Wert bleibt, auch wenn sich der Bestand ändert.
-        $this->actingAs($user)->post('/vorrat/'.$position->id.'/buchen', ['delta' => 5, 'reason' => 'purchase']);
-        $this->assertSame('2.000', $zeile->fresh()->expected_qty);
-    }
-
-    public function test_es_laeuft_hoechstens_eine_inventur(): void
-    {
-        [$user, $family] = $this->familie();
-        $this->position($user, 'Mehl');
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full'])->assertSessionHasNoErrors();
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full'])->assertSessionHasErrors('scope');
-
-        $this->assertSame(1, $this->imKontext($user, fn () => Inventory::count()));
-
-        // Ebene 2: auch an Eloquent vorbei nicht.
-        $this->expectException(QueryException::class);
-
-        DB::table('inventories')->insert([
-            'public_id' => str_repeat('Y', 26), 'family_id' => $family->id,
-            'scope' => 'full', 'status' => 'open', 'started_at' => now(),
-        ]);
-    }
-
-    public function test_zaehlen_und_abschliessen_schreibt_den_bestand_fort(): void
-    {
-        [$user] = $this->familie();
-        $position = $this->position($user, 'Mehl', bestand: 2, soll: 3);
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full']);
-        $inventur = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail());
-        $zeile = $this->imKontext($user, fn () => $inventur->lines()->firstOrFail());
-
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => 5])
-            ->assertRedirect()->assertSessionHasNoErrors();
-
-        $this->assertSame('5.000', $zeile->fresh()->counted_qty);
-        $this->assertSame('3.000', $zeile->fresh()->difference, 'Die Abweichung rechnet die Datenbank.');
-        $this->assertSame('2.000', $position->fresh()->current_qty, 'Vor dem Abschluss ändert sich nichts.');
-
-        $this->actingAs($user)->post('/vorrat/inventur/'.$inventur->public_id.'/abschliessen')
-            ->assertRedirect();
-
-        $this->assertSame('5.000', $position->fresh()->current_qty);
-        $this->assertSame('completed', $inventur->fresh()->status);
-
-        $buchung = $this->imKontext($user, fn () => PantryMovement::latest('id')->firstOrFail());
-        $this->assertSame('inventory', $buchung->reason);
-        $this->assertSame('3.000', $buchung->qty_delta);
-        $this->assertSame($inventur->id, $buchung->ref_id);
-    }
-
-    public function test_ungezaehlte_positionen_bleiben_beim_abschluss_unangetastet(): void
-    {
-        [$user] = $this->familie();
-        $gezaehlt = $this->position($user, 'Mehl', bestand: 2);
-        $ungezaehlt = $this->position($user, 'Zucker', bestand: 4);
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full']);
-        $inventur = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail());
-        $zeile = $this->imKontext($user, fn () => $inventur->lines()->where('pantry_item_id', $gezaehlt->id)->firstOrFail());
-
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => 1]);
-        $this->actingAs($user)->post('/vorrat/inventur/'.$inventur->public_id.'/abschliessen');
-
-        $this->assertSame('1.000', $gezaehlt->fresh()->current_qty);
-        // Was niemand angesehen hat, darf die Inventur nicht auf null setzen.
-        $this->assertSame('4.000', $ungezaehlt->fresh()->current_qty);
-    }
-
-    public function test_eine_leere_eingabe_nimmt_die_zaehlung_zurueck(): void
-    {
-        [$user] = $this->familie();
-        $this->position($user, 'Mehl', bestand: 2);
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full']);
-        $inventur = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail());
-        $zeile = $this->imKontext($user, fn () => $inventur->lines()->firstOrFail());
-
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => 3]);
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => '']);
-
-        $this->assertNull($zeile->fresh()->counted_qty, 'Wer sich vertippt, muss zurückkönnen.');
-        $this->assertNull($zeile->fresh()->counted_by);
-    }
-
-    public function test_abbrechen_laesst_die_bestaende_in_ruhe(): void
-    {
-        [$user] = $this->familie();
-        $position = $this->position($user, 'Mehl', bestand: 2);
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full']);
-        $inventur = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail());
-        $zeile = $this->imKontext($user, fn () => $inventur->lines()->firstOrFail());
-
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => 99]);
-        $this->actingAs($user)->post('/vorrat/inventur/'.$inventur->public_id.'/abbrechen')
-            ->assertRedirect(route('vorrat.inventur.index'));
-
-        $this->assertSame('cancelled', $inventur->fresh()->status);
-        $this->assertSame('2.000', $position->fresh()->current_qty);
-    }
-
-    public function test_der_bericht_zeigt_die_abweichung(): void
-    {
-        [$user] = $this->familie();
-        $this->position($user, 'Mehl', bestand: 2);
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full']);
-        $inventur = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail());
-        $zeile = $this->imKontext($user, fn () => $inventur->lines()->firstOrFail());
-
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => 1]);
-        $this->actingAs($user)->post('/vorrat/inventur/'.$inventur->public_id.'/abschliessen');
-
-        $this->actingAs($user)->get('/vorrat/inventur/'.$inventur->public_id)
-            ->assertOk()
-            ->assertSee('Mehl')
-            ->assertSee('Abweichung');
-    }
-
-    public function test_fehlmengen_aus_der_inventur_gehen_auf_die_liste(): void
-    {
-        [$user] = $this->familie();
-        $this->position($user, 'Mehl', bestand: 3, soll: 3);
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full']);
-        $inventur = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail());
-        $zeile = $this->imKontext($user, fn () => $inventur->lines()->firstOrFail());
-
-        // Gezählt wurde weniger als gedacht.
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => 1]);
-        $this->actingAs($user)->post('/vorrat/inventur/'.$inventur->public_id.'/abschliessen');
-        $this->actingAs($user)->post('/vorrat/inventur/'.$inventur->public_id.'/auf-die-liste')
-            ->assertRedirect(route('einkaufsliste.index'));
-
-        $eintrag = $this->listeneintraege($user)->firstWhere('raw_name', 'Mehl');
-
-        $this->assertSame('2.000', $eintrag->amount, 'Soll 3 minus gezählte 1.');
-    }
-
-    public function test_an_einer_abgeschlossenen_inventur_wird_nicht_mehr_gezaehlt(): void
-    {
-        [$user] = $this->familie();
-        $this->position($user, 'Mehl');
-
-        $this->actingAs($user)->post('/vorrat/inventur', ['scope' => 'full']);
-        $inventur = $this->imKontext($user, fn () => Inventory::offen()->firstOrFail());
-        $zeile = $this->imKontext($user, fn () => $inventur->lines()->firstOrFail());
-
-        $this->actingAs($user)->post('/vorrat/inventur/'.$inventur->public_id.'/abschliessen');
-
-        $this->actingAs($user)->put('/vorrat/inventur/zeile/'.$zeile->id, ['counted_qty' => 7])
-            ->assertForbidden();
     }
 
     public function test_fremder_vorrat_endet_in_404(): void

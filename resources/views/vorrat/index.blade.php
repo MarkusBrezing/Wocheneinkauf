@@ -35,7 +35,7 @@
         @if ($laeuftAb > 0)
             <span class="kachel">{{ $laeuftAb }} laufen bald ab</span>
         @endif
-        <a href="{{ route('vorrat.inventur.index') }}" class="knopf knopf-schlicht" style="margin:0">Inventur</a>
+        <a href="{{ route('einkaufsliste.inventur') }}" class="knopf knopf-schlicht" style="margin:0">Bestandsaufnahme</a>
     </p>
 
     <form method="GET" action="{{ route('vorrat.index') }}"

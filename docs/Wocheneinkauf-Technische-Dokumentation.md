@@ -69,7 +69,7 @@ graph TB
         Mar["Markets<br/>Märkte, Regalbereiche"]
         SL["ShoppingList<br/>Liste, Vorlagen, Archiv"]
         Rec["Recipes<br/>Rezepte, Zutaten, Tags"]
-        Pan["Pantry<br/>Vorrat, Inventur"]
+        Pan["Pantry<br/>Vorrat, Buchungen"]
         MP["MealPlan<br/>Wochenplan, Vorschläge"]
     end
 
@@ -103,7 +103,7 @@ Die Pfeilrichtung ist die Aussage: **Die Einkaufsliste kennt niemanden, der sie 
 | **Markets** | Märkte und Regalbereiche in Laufreihenfolge | `Market`, `MarketSection` |
 | **ShoppingList** | Liste, Freitexterkennung, Sortierung, Archiv, Vorlagen, Abgleich | `ShoppingListManager`, `ItemTextParser`, `ListSorter`, `ListArchiver`, `ListSnapshot` |
 | **Recipes** | Rezepte, Zutaten, Schlagworte, Übernahme auf die Liste | `RecipeToList` |
-| **Pantry** | Bestand, Buchungen, Inventurlauf, Fehlmengen | `PantryManager`, `InventoryRunner`, `ShortfallToList` |
+| **Pantry** | Bestand, Buchungen, Fehlmengen | `PantryManager`, `ShortfallToList` |
 | **MealPlan** | Wochenplan, Vorschlagsgenerator, Übernahme auf die Liste | `MealPlanManager`, `SuggestionEngine` |
 
 ### 3.3 Schichten innerhalb eines Moduls
@@ -291,7 +291,7 @@ classDiagram
     RecipeToList ..> ShoppingListManager : addOrMerge
 ```
 
-### 4.4 Vorrat und Inventur
+### 4.4 Vorrat
 
 ```mermaid
 classDiagram
@@ -312,46 +312,28 @@ classDiagram
         +int ref_id
     }
 
-    class Inventory {
-        +string scope
-        +string status
-        +started_at
-        +completed_at
-        +scopeOffen()
-    }
-
-    class InventoryLine {
-        +decimal expected_qty
-        +decimal counted_qty
-        +decimal target_qty
-        +decimal difference
-    }
-
     class PantryManager {
         +ensureItem(Product, string, array) PantryItem
         +book(item, float, string, User) PantryMovement
         +setTo(item, float, string, User) PantryMovement
     }
 
-    class InventoryRunner {
-        +start(string, string, array, string, User) Inventory
-        +count(line, float, User, string) InventoryLine
-        +complete(Inventory, User) int
-        +cancel(Inventory) Inventory
-    }
-
     class ShortfallToList {
         +fromPantry(User, array) array
-        +fromInventory(Inventory, User) array
+    }
+
+    class PantryInventory {
+        +uebernehmen(list, array) array
+        -fehlmenge(Product, array) ParsedItem
     }
 
     PantryItem "1" o-- "*" PantryMovement
-    Inventory "1" *-- "*" InventoryLine
-    InventoryLine "*" --> "1" PantryItem
     PantryManager ..> PantryItem
-    InventoryRunner ..> PantryManager : bucht über
     ShortfallToList ..> ShoppingListManager
+    PantryInventory ..> ShoppingListManager
 ```
+
+`PantryInventory` gehört zum Modul ShoppingList, nicht zu Pantry: Die Bestandsaufnahme liest die **Sollmenge am Artikel** (`products.pantry_target_amount`) und schreibt auf die Einkaufsliste. Sie rührt den Vorrat nicht an und braucht deshalb auch keine eigenen Tabellen.
 
 ### 4.5 Wochenplan
 
@@ -518,26 +500,28 @@ sequenceDiagram
     C-->>N: Redirect auf /einkaufsliste
 ```
 
-### 5.5 Inventur abschließen (E-06)
+### 5.5 Bestandsaufnahme des Grundvorrats (E-09)
 
 ```mermaid
 sequenceDiagram
     actor N as Nutzer
-    participant C as InventoryController
-    participant R as InventoryRunner
-    participant P as PantryManager
-    participant DB as MariaDB
+    participant C as PantryInventoryController
+    participant P as PantryInventory
+    participant M as ShoppingListManager
 
-    N->>C: POST /vorrat/inventur/{id}/abschliessen
-    C->>R: complete(inventur, user)
-    loop je gezählter Zeile
-        R->>P: setTo(position, gezählteMenge, 'inventory')
-        P->>DB: INSERT pantry_movements (Differenz)
-        P->>DB: UPDATE pantry_items.current_qty
+    N->>C: GET /einkaufsliste/inventur
+    C-->>N: je Grundvorratsartikel Sollmenge und ein leeres Feld
+    N->>C: POST mit den gezählten Mengen
+    C->>P: uebernehmen(liste, zaehlung)
+    loop je Artikel mit Eintrag
+        P->>P: Soll − Ist
+        alt fehlt etwas
+            P->>M: addOrMerge(Fehlmenge)
+        else nichts oder nicht gezählt
+            Note over P: Ein leeres Feld heißt "nicht gezählt"<br/>und nicht "nichts da".
+        end
     end
-    Note over R,DB: Ungezählte Zeilen bleiben unangetastet.<br/>Was niemand angesehen hat, darf<br/>die Inventur nicht auf null setzen.
-    R->>DB: UPDATE inventories SET status = completed
-    C-->>N: Bericht mit Abweichungen
+    C-->>N: Redirect auf die Einkaufsliste
 ```
 
 ---
@@ -564,25 +548,7 @@ stateDiagram-v2
     end note
 ```
 
-### 6.2 Inventurlauf
-
-```mermaid
-stateDiagram-v2
-    [*] --> open : start()
-    open --> open : count() — beliebig oft, auch zu mehreren
-    open --> completed : complete() — gezählte Zeilen werden gebucht
-    open --> cancelled : cancel() — Bestände bleiben unberührt
-    completed --> [*]
-    cancelled --> [*]
-
-    note right of open
-        Höchstens eine offene Inventur je Familie
-        (offen_marker + UNIQUE).
-        Ist und Soll sind beim Start eingefroren.
-    end note
-```
-
-### 6.3 Platz im Wochenplan
+### 6.2 Platz im Wochenplan
 
 ```mermaid
 stateDiagram-v2
@@ -603,7 +569,7 @@ stateDiagram-v2
     end note
 ```
 
-### 6.4 Einladung
+### 6.3 Einladung
 
 ```mermaid
 stateDiagram-v2
@@ -650,9 +616,7 @@ Ebene 1 fängt Vergesslichkeit ab, Ebene 1½ fängt manipulierte Formulare ab, E
 | Zusage | Umsetzung |
 |---|---|
 | Eine aktive Einkaufsliste je Familie | `aktiv_marker` (generiert) + UNIQUE |
-| Eine offene Inventur je Familie | `offen_marker` (generiert) + UNIQUE |
 | Kein Eintrag in fremder Liste | Verbund-Fremdschlüssel `(list_id, family_id)` |
-| Abweichung stimmt immer | `inventory_lines.difference` als generierte Spalte |
 
 Der Grund ist immer derselbe: Zwei gleichzeitige Anfragen können eine Prüfung im Code unterlaufen — „gibt es schon eine aktive Liste?" ist zwischen Frage und Antwort nicht mehr wahr. Ein UNIQUE ist es.
 
@@ -764,7 +728,7 @@ graph TB
 | Codeformat | Laravel Pint, Standard `laravel` |
 | Laufzeit der Testreihe | rund 140 Sekunden |
 
-Getestet wird ausdrücklich auch das, was **nicht** passieren darf: fremde Datensätze enden in 404, die zweite aktive Liste scheitert an der Datenbank, ein abgebrochener Inventurlauf lässt Bestände unberührt, ein ausgeschlossenes Rezept taucht in keinem Vorschlag auf.
+Getestet wird ausdrücklich auch das, was **nicht** passieren darf: fremde Datensätze enden in 404, die zweite aktive Liste scheitert an der Datenbank, die Bestandsaufnahme rührt den Vorrat nicht an, ein ausgeschlossenes Rezept taucht in keinem Vorschlag auf.
 
 ```bash
 php artisan test          # ganze Reihe

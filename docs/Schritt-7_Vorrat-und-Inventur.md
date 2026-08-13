@@ -1,5 +1,25 @@
 # Schritt 7 – Vorrat und Inventur
 
+> **Nachtrag vom 13.08.2026: Der Inventurlauf ist wieder entfernt.**
+>
+> Die Bestandsaufnahme des Grundvorrats (siehe Schritt 4, Abschnitt „Bestand
+> des Grundvorrats") reicht für einen Haushalt: Sie rechnet Soll minus Ist und
+> schreibt die Differenz auf die Einkaufsliste — in fünf Minuten, ohne Lauf,
+> ohne Zustand. Der vollständige Inventurlauf mit eingefrorenen
+> Erwartungswerten, Zählhistorie und Abweichungsbericht war dafür der schwerere
+> Weg und blieb ungenutzt.
+>
+> **Entfernt:** `inventories`, `inventory_lines`, `InventoryRunner`,
+> `InventoryController`, die drei Ansichten und `ShortfallToList::fromInventory()`.
+> Beide Tabellen waren leer.
+>
+> **Geblieben:** der Vorrat selbst (`pantry_items`, `pantry_movements`) mit
+> Beständen, Buchungen, Meldebestand und Haltbarkeit — der Wochenplan rechnet
+> damit. Und E-09, die Fehlmengen auf der Einkaufsliste.
+>
+> Das Folgende beschreibt den Stand von Schritt 7 und bleibt als Protokoll
+> stehen.
+
 **Ziel laut Architekturkonzept (Abschnitt 6):** *Bestandsführung mit Inventurlauf.*
 **Abgedeckte Use Cases:** E-01 … E-11 (E-12 bis E-14 sind KANN und bleiben offen).
 

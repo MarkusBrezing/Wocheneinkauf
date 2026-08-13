@@ -68,7 +68,7 @@
             sortiert nach Warengruppen
         @endif
         · <a href="{{ route('einkaufsliste.drucken') }}">Drucken oder teilen</a>
-        · <a href="{{ route('einkaufsliste.inventur') }}">Bestand der Fixartikel</a>
+        · <a href="{{ route('einkaufsliste.inventur') }}">Bestandsaufnahme</a>
     </p>
 
     {{--

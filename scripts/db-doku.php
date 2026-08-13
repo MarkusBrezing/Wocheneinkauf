@@ -9,13 +9,15 @@
  *
  * Aufruf aus dem Projektverzeichnis:  php <pfad>/db-doku.php
  */
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+
+// Die use-Anweisungen stehen vor dem Laden: Sie werden beim Uebersetzen
+// gelesen und gelten nicht rueckwirkend fuer Zeilen darueber.
 require __DIR__.'/../vendor/autoload.php';
 
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\DB;
 
 $prosa = require __DIR__.'/db-doku-prosa.php';
 $schema = config('database.connections.mysql.database');
@@ -120,13 +122,12 @@ $z('| `*_qty`, `amount` | `decimal(10,3)`. Kein Fließkomma: 0,1 + 0,2 soll 0,3 
 $z();
 $z('### 1.4 Regeln, die die Datenbank selbst durchsetzt');
 $z();
-$z('Drei Zusagen der Anwendung stehen nicht im Code, sondern im Schema -- der Code könnte sie unter gleichzeitigen Zugriffen sonst verletzen:');
+$z('Zwei Zusagen der Anwendung stehen nicht im Code, sondern im Schema -- der Code könnte sie unter gleichzeitigen Zugriffen sonst verletzen:');
 $z();
 $z('| Regel | Umsetzung |');
 $z('|---|---|');
 $z('| Höchstens **eine aktive Einkaufsliste** je Familie | Generierte Spalte `shopping_lists.aktiv_marker` (1 bei `active`, sonst NULL) plus UNIQUE `(family_id, aktiv_marker)`. NULL zählt im UNIQUE nicht mit, deshalb sind beliebig viele archivierte Listen erlaubt. |');
-$z('| Höchstens **eine offene Inventur** je Familie | Dasselbe Muster mit `inventories.offen_marker`. |');
-$z('| Abweichung einer Inventurzeile | Generierte Spalte `inventory_lines.difference` = gezählt − erwartet. Von der Datenbank gerechnet, damit sie nicht auseinanderlaufen kann. |');
+$z('| Kein Eintrag in fremder Liste | Verbund-Fremdschlüssel `(list_id, family_id)` -- dasselbe Muster auf allen Untertabellen. |');
 $z();
 $z('---');
 $z();
@@ -180,8 +181,6 @@ $z('    recipes ||--o{ recipe_tag : ""');
 $z('    tags ||--o{ recipe_tag : ""');
 $z('    products ||--o{ pantry_items : "liegt im Vorrat"');
 $z('    pantry_items ||--o{ pantry_movements : "Buchungen"');
-$z('    inventories ||--o{ inventory_lines : "Zählzeilen"');
-$z('    pantry_items ||--o{ inventory_lines : "gezählt wird"');
 $z('    families ||--o{ meal_plans : ""');
 $z('    meal_plans ||--o{ meal_plan_slots : "Plätze"');
 $z('    recipes ||--o| meal_plan_slots : "belegt mit"');
@@ -279,7 +278,7 @@ $z('| Tabellen | '.count($spalten).' |');
 $z('| Spalten | '.$anzahlSpalten.' |');
 $z('| Fremdschlüssel | '.$anzahlFks.' |');
 $z('| Schlüssel und Indizes | '.$anzahlIdx.' |');
-$z('| Generierte Spalten | 3 |');
+$z('| Generierte Spalten | 1 |');
 $z();
 $z('### 4.2 Dokument neu erzeugen');
 $z();
