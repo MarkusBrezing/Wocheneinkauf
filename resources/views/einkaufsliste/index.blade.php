@@ -5,11 +5,21 @@
     <style>
         /* Die Abschnittsköpfe tragen die Laufreihenfolge durch den Markt --
            sie dürfen die kräftigste Farbe der Seite haben. */
-        .abschnitt { color: var(--primaer); border-bottom: 1px solid var(--rand);
-                     padding-bottom: 0.2rem; }
+        .abschnitt-block { margin-top: 1.25rem; }
+        .abschnitt-block > summary { cursor: pointer; display: flex; align-items: baseline;
+            gap: 0.6rem; padding: 0.25rem 0 0.2rem; color: var(--primaer);
+            font-size: 1.15rem; font-weight: 600;
+            border-bottom: 1px solid var(--rand); }
+        .abschnitt-block > summary:hover { border-bottom-color: var(--primaer); }
+        .abschnitt-block .stand { margin-left: auto; font-size: 0.85rem; font-weight: 400;
+            color: var(--gedaempft); }
+        /* Ein abgeräumter Abschnitt tritt zurück -- er steht zugeklappt da und
+           soll den Blick nicht mehr auf sich ziehen. */
+        .abschnitt-block:not([open]) > summary { color: var(--gedaempft);
+            border-bottom-style: dashed; }
         /* Was es hier nicht gibt, ist keine Warengruppe, sondern ein Hinweis.
            Terrakotta trennt das sichtbar vom Rest der Liste. */
-        .abschnitt-anderswo { color: var(--akzent); border-bottom-color: var(--akzent); }
+        .block-anderswo > summary { color: var(--akzent); border-bottom-color: var(--akzent); }
         .liste tbody:nth-of-type(even) tr { background: var(--flaeche); }
         .liste .erledigt { color: var(--gedaempft); text-decoration: line-through; }
         .haken { accent-color: var(--primaer); }
@@ -119,12 +129,29 @@
     {{-- Die Vorschlagsliste für alle Eingabefelder dieser Seite --}}
     <x-artikel-vorschlaege :artikel="$artikelnamen" />
 
-    {{-- Die Liste selbst (C-06, C-16) --}}
+    {{-- Die Liste selbst (C-06, C-16).
+
+         Jeder Abschnitt ist klappbar und steht offen: Eine Einkaufsliste, die
+         ihre Artikel versteckt, hat ihren Zweck verfehlt. Zuklappen ist für
+         den Fall gedacht, dass man gerade nur einen Bereich bearbeitet --
+         nicht für den ersten Blick.
+
+         Was durchgehend abgehakt ist, klappt von selbst zu. Es steht ja
+         schon im Wagen. --}}
     @forelse ($abschnitte as $abschnitt)
-        <h2 @class(['abschnitt', 'abschnitt-anderswo' => $abschnitt->name === \App\Modules\ShoppingList\Services\ListSorter::ANDERSWO])>
-            {{ $abschnitt->name }}
-            <span class="gedaempft" style="font-weight:400">({{ $abschnitt->offen() }} offen)</span>
-        </h2>
+        @php($erledigt = $abschnitt->offen() === 0)
+        <details @class(['abschnitt-block', 'block-anderswo' => $abschnitt->name === \App\Modules\ShoppingList\Services\ListSorter::ANDERSWO])
+                 {{ $erledigt ? '' : 'open' }}>
+            <summary>
+                <span class="name">{{ $abschnitt->name }}</span>
+                <span class="stand">
+                    @if ($erledigt)
+                        alles erledigt
+                    @else
+                        {{ $abschnitt->offen() }} offen
+                    @endif
+                </span>
+            </summary>
 
         <div class="tabellenrahmen">
             <table class="liste">
@@ -229,6 +256,7 @@
                 @endforeach
             </table>
         </div>
+        </details>
     @empty
         <p class="gedaempft" style="margin-top:1.5rem">
             Die Liste ist leer. Schreib oben etwas auf, oder starte mit dem

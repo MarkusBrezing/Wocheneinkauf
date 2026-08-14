@@ -28,7 +28,9 @@ Addiert wird nur bei **gleicher Einheit**. „1 l Milch" und „1 Packung Milch"
 
 ## Die Gliederung
 
-Die Liste ist nach **Regalbereichen des gewählten Marktes** gegliedert, in der Reihenfolge, in der man durch den Laden geht. Abgehaktes sinkt innerhalb seines Abschnitts nach unten, bleibt aber sichtbar.
+Die Liste ist nach **Regalbereichen des gewählten Marktes** gegliedert, in der Reihenfolge, in der man durch den Laden geht. Ohne gewählten Markt gliedert sie nach Warengruppen. Abgehaktes sinkt innerhalb seines Abschnitts nach unten, bleibt aber sichtbar.
+
+Jeder Abschnitt ist **klappbar** und steht offen, solange etwas fehlt; rechts im Kopf steht, wie viele Artikel darin noch offen sind. Ein Abschnitt, in dem alles abgehakt ist, **klappt von selbst zu** und tritt zurück — er steht ja schon im Wagen.
 
 Am Ende steht gegebenenfalls der Abschnitt **„Gibt es hier nicht"** — Artikel, die im gewählten Markt nicht erhältlich sind (siehe Kapitel *Märkte*).
 

@@ -265,4 +265,33 @@ class EinkaufslisteTest extends EinkaufslisteTestCase
             ->assertSee('Kühlregal')
             ->assertSee('[ ] 2 l Vollmilch');
     }
+
+    /**
+     * Die Abschnitte der Liste sind klappbar. Offen, solange etwas fehlt --
+     * eine Einkaufsliste, die ihre Artikel versteckt, hat ihren Zweck
+     * verfehlt. Ein durchgehend abgehakter Abschnitt klappt von selbst zu.
+     */
+    public function test_abschnitte_sind_klappbar_und_abgeraeumte_zugeklappt(): void
+    {
+        [$user] = $this->familie();
+
+        $this->aufDieListe($user, '2 l Milch');
+        $this->aufDieListe($user, '1 kg Äpfel');
+
+        $inhalt = $this->actingAs($user)->get('/einkaufsliste')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<details class="abschnitt-block"', $inhalt);
+        $this->assertStringContainsString('offen', $inhalt);
+
+        // Alles abhaken -- der Abschnitt steht danach zugeklappt da.
+        foreach ($this->eintraege($user) as $eintrag) {
+            $this->actingAs($user)->from('/einkaufsliste')
+                ->post('/einkaufsliste/eintraege/'.$eintrag->client_uuid.'/haken');
+        }
+
+        $inhalt = $this->actingAs($user)->get('/einkaufsliste')->assertOk()->getContent();
+
+        $this->assertStringContainsString('alles erledigt', $inhalt);
+        $this->assertStringNotContainsString('open>', $inhalt);
+    }
 }
