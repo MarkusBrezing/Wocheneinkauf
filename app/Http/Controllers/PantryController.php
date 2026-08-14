@@ -142,6 +142,22 @@ class PantryController extends Controller
     /**
      * Fehlmengen gesammelt auf die Einkaufsliste (E-09).
      */
+    /**
+     * Die Bestaetigung vor der Uebernahme (E-09).
+     *
+     * Zeigt Zeile fuer Zeile, was auf die Liste kaeme -- mit Bestand, Soll und
+     * Fehlmenge -- und laesst einzelne abwaehlen. Ungefragt fuenfzehn Zeilen
+     * auf die Einkaufsliste zu schreiben ist schwer rueckgaengig zu machen:
+     * Danach steht man vor einer Liste und weiss nicht mehr, was von Hand
+     * daraufkam und was aus dem Vorrat.
+     */
+    public function showToList(Request $request, ShortfallToList $uebernahme)
+    {
+        $this->currentFamily($request);
+
+        return view('vorrat.fehlmengen', ['fehlmengen' => $uebernahme->vorschau()]);
+    }
+
     public function toList(Request $request, ShortfallToList $uebernahme)
     {
         $this->currentFamily($request);

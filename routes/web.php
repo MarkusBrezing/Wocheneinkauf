@@ -158,7 +158,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{position}', [PantryController::class, 'destroy'])->name('destroy');
         Route::post('/{position}/buchen', [PantryController::class, 'book'])->name('buchen');
         Route::get('/{position}/verlauf', [PantryController::class, 'movements'])->name('verlauf');
-        Route::post('/auf-die-liste', [PantryController::class, 'toList'])->name('auf-die-liste');
+        // Fehlmengen auf die Einkaufsliste (E-09): erst zeigen, dann
+        // uebernehmen -- und nur, was ausgewaehlt bleibt.
+        Route::get('/auf-die-liste', [PantryController::class, 'showToList'])->name('auf-die-liste');
+        Route::post('/auf-die-liste', [PantryController::class, 'toList'])->name('auf-die-liste.store');
 
     });
 

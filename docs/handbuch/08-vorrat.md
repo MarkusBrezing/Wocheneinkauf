@@ -32,7 +32,9 @@ Der Bestand geht nie unter null. Wer 3 kg verbraucht, aber nur 2 kg im System ha
 
 ## Fehlmengen auf die Liste
 
-**Auf die Einkaufsliste** rechnet Soll minus Ist und setzt die Differenz auf die aktuelle Liste. Was über dem Soll liegt, bleibt im Schrank.
+**Fehlmengen ansehen** rechnet Soll minus Bestand und zeigt Zeile für Zeile, was auf die Liste käme — mit Bestand, Soll und Fehlmenge. Was über dem Soll liegt, taucht gar nicht erst auf.
+
+Alles ist vorausgewählt; einzelne Zeilen lassen sich abwählen. Erst **Auf die Einkaufsliste setzen** überträgt sie. Angesehen heißt also nicht übernommen — ungefragt fünfzehn Zeilen aufzuschreiben wäre schwer rückgängig zu machen, denn danach steht man vor einer Liste und weiß nicht mehr, was von Hand daraufkam und was aus dem Vorrat.
 
 ## Die Bestandsaufnahme
 

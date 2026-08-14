@@ -126,6 +126,62 @@ class VorratTest extends TestCase
             ->assertSee('· knapp');
     }
 
+    /**
+     * Fehlmengen gehen erst nach Bestätigung auf die Liste.
+     *
+     * Ungefragt fünfzehn Zeilen aufzuschreiben ist schwer rückgängig zu
+     * machen: Danach steht man vor einer Liste und weiß nicht mehr, was von
+     * Hand daraufkam und was aus dem Vorrat.
+     */
+    public function test_die_bestaetigung_zeigt_bestand_soll_und_fehlmenge(): void
+    {
+        [$user] = $this->familie();
+        $this->position($user, 'Mehl', bestand: 1, soll: 3);
+        $this->position($user, 'Zucker', bestand: 5, soll: 3);
+
+        $antwort = $this->actingAs($user)->get('/vorrat/auf-die-liste')->assertOk();
+
+        $antwort->assertSee('Mehl');
+        // Was über dem Soll liegt, taucht gar nicht erst auf.
+        $antwort->assertDontSee('Zucker');
+
+        $zeile = $antwort->viewData('fehlmengen')->firstWhere('name', 'Mehl');
+
+        $this->assertSame('1', $zeile['bestand']);
+        $this->assertSame('3', $zeile['soll']);
+        $this->assertSame('2', $zeile['fehlt']);
+
+        // Angesehen heißt nicht übernommen -- es entsteht nicht einmal eine
+        // Liste, auf die etwas könnte.
+        $this->assertSame(0, $this->imKontext($user, fn () => ShoppingListItem::count()));
+    }
+
+    public function test_abgewaehlte_positionen_bleiben_von_der_liste_weg(): void
+    {
+        [$user] = $this->familie();
+        $mehl = $this->position($user, 'Mehl', bestand: 1, soll: 3);
+        $this->position($user, 'Salz', bestand: 0, soll: 2);
+
+        // Wie das Formular es schickt: nur die angehakten Zeilen.
+        $this->actingAs($user)->post('/vorrat/auf-die-liste', ['positionen' => [$mehl->id]])
+            ->assertRedirect(route('einkaufsliste.index'));
+
+        $eintraege = $this->listeneintraege($user);
+
+        $this->assertCount(1, $eintraege);
+        $this->assertSame('Mehl', $eintraege->first()->raw_name);
+    }
+
+    public function test_ohne_fehlmenge_sagt_die_seite_dass_nichts_fehlt(): void
+    {
+        [$user] = $this->familie();
+        $this->position($user, 'Mehl', bestand: 5, soll: 3);
+
+        $this->actingAs($user)->get('/vorrat/auf-die-liste')
+            ->assertOk()
+            ->assertSee('Es fehlt nichts.');
+    }
+
     public function test_fehlmengen_gehen_auf_die_einkaufsliste(): void
     {
         [$user] = $this->familie();

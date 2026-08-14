@@ -134,12 +134,12 @@
     <h2>Fehlmengen auf die Einkaufsliste</h2>
     <p class="gedaempft">
         Alles, was unter dem Soll liegt, kommt mit der Differenz auf die Liste —
-        zusammengeführt mit dem, was schon draufsteht.
+        zusammengeführt mit dem, was schon draufsteht. Die nächste Seite zeigt zuerst,
+        was das wäre, und lässt einzelne Zeilen abwählen.
     </p>
-    <form method="POST" action="{{ route('vorrat.auf-die-liste') }}">
-        @csrf
-        <button type="submit">Fehlmengen übernehmen</button>
-    </form>
+    <p>
+        <a href="{{ route('vorrat.auf-die-liste') }}" class="knopf">Fehlmengen ansehen …</a>
+    </p>
 
     <h2>Position aufnehmen</h2>
     <form method="POST" action="{{ route('vorrat.store') }}">
