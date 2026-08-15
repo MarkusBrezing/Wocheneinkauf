@@ -10,6 +10,20 @@ Schlagworte lassen sich kombinieren und wirken als **UND**: „vegetarisch" *und
 
 Schlagworte haben eine Art — Protein, Küche, Ernährung, Gang, Saison. Die Art ist nicht Kosmetik: Der Wochenplan liest **Protein** und **Küche**, um für Abwechslung zu sorgen.
 
+## Rezepte importieren
+
+Statt jedes Rezept einzeln zu tippen, lassen sich mehrere auf einmal übernehmen — über **Rezepte › Importieren**.
+
+Der Weg, für den das gedacht ist, hat drei Schritte:
+
+1. **Auftrag kopieren.** Auf der Importseite steht ein fertiger Text für eine Sprach-KI. Er beschreibt das Format so genau, dass das Ergebnis ohne Nacharbeit passt. Am Ende hängen Sie an, was Sie möchten — etwa „zehn schnelle vegetarische Abendessen für vier Personen".
+2. **Antwort einfügen.** Die Antwort der KI markieren, kopieren und in das Feld darunter einfügen. Angelegt wird noch nichts.
+3. **Befund ansehen und bestätigen.** Die nächste Seite zeigt, wie viele Rezepte dazukämen, welche übersprungen werden (die gibt es schon) und welche Einträge unbrauchbar sind — mit Angabe, woran es lag. Erst der Knopf darunter legt an.
+
+> **Zutaten werden verknüpft, nicht angelegt.** Findet sich im Artikelkatalog ein Artikel gleichen Namens, zeigt die Zutat darauf. Sonst bleibt sie Text — auf der Einkaufsliste landet sie trotzdem. Ein Import von zwanzig Rezepten würde sonst hundert ungeprüfte Artikel in den Katalog spülen.
+
+Ein Rezept, das es unter demselben Namen schon gibt, wird **nicht überschrieben**. Was von Hand gepflegt wurde, hat Vorrang vor einer Datei.
+
 ## Ein Rezept anlegen
 
 | Feld | Wozu |

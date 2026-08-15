@@ -17,6 +17,7 @@ use App\Http\Controllers\PantryInventoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductGroupController;
 use App\Http\Controllers\RecipeController;
+use App\Http\Controllers\RecipeImportController;
 use App\Http\Controllers\RecipeIngredientController;
 use App\Http\Controllers\RecipeToListController;
 use App\Http\Controllers\ShoppingListArchiveController;
@@ -194,6 +195,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('rezepte')->name('rezepte.')->group(function () {
         Route::get('/', [RecipeController::class, 'index'])->name('index');
         Route::get('/neu', [RecipeController::class, 'create'])->name('create');
+
+        /*
+         * Import aus einer JSON-Datei (D-09). Drei Schritte: Prompt und
+         * Hochladen, Vorschau, Anlegen. Die feste Route steht vor dem
+         * Platzhalter {rezept}, sonst wuerde "import" als Rezept gelesen.
+         */
+        Route::get('/import', [RecipeImportController::class, 'show'])->name('import');
+        Route::post('/import/vorschau', [RecipeImportController::class, 'preview'])->name('import.vorschau');
+        Route::post('/import', [RecipeImportController::class, 'store'])->name('import.store');
         Route::post('/', [RecipeController::class, 'store'])->name('store');
         Route::get('/{rezept}', [RecipeController::class, 'show'])->name('show');
         Route::get('/{rezept}/bearbeiten', [RecipeController::class, 'edit'])->name('edit');

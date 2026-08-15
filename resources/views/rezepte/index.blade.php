@@ -34,6 +34,7 @@
     <p class="gedaempft" style="margin-top:1rem">
         {{ $rezepte->total() }} {{ $rezepte->total() === 1 ? 'Rezept' : 'Rezepte' }}
         · <a href="{{ route('rezepte.create') }}">Neues Rezept</a>
+        · <a href="{{ route('rezepte.import') }}">Importieren</a>
     </p>
 
     <div class="tabellenrahmen">
