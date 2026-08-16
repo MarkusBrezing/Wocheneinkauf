@@ -154,9 +154,32 @@ DocumentRoot /var/www/wocheneinkauf/public
 </Directory>
 ```
 
-**Webhosting ohne freie vhost-Wahl:** Im Kundenmenü das Zielverzeichnis der Domain auf `.../wocheneinkauf/public` setzen. Geht das nicht, bleibt der Weg, den Inhalt von `public/` in das Web-Verzeichnis zu legen und den Rest der Anwendung **eine Ebene darüber** — außerhalb des Webs. In `index.php` sind dann die beiden `require`-Pfade anzupassen.
+**Webhosting:** Die Funktion heißt bei STRATO **interne Umleitung**. Zu finden unter
+
+> Kunden-Login → **Domains → Domainverwaltung** → beim Domainnamen auf das **Zahnrad-Symbol** → Zielverzeichnis
+
+Voreingestellt ist das Wurzelverzeichnis `/`; das muss auf `/wocheneinkauf/public` geändert werden. STRATO unterscheidet dabei die *interne* Umleitung (ein Verzeichnis auf dem eigenen Webspace — das ist gemeint) von der *externen* (eine fremde Internetadresse).
+
+Geht es wider Erwarten nicht, bleibt der Weg, den Inhalt von `public/` in das Web-Verzeichnis zu legen und den Rest der Anwendung **eine Ebene darüber** — außerhalb des Webs. In `index.php` sind dann die beiden `require`-Pfade anzupassen.
 
 > **Nicht** die Anwendung komplett ins Web-Verzeichnis legen und mit `.htaccess` absichern. Ein Konfigurationsfehler legt dann die `.env` offen.
+
+### „Alle Domains zeigen auf einen Unterordner" — reicht das?
+
+Nur wenn zweierlei stimmt:
+
+1. **Auf welchen.** Es muss `.../wocheneinkauf/public` sein, nicht `.../wocheneinkauf`. Zeigt eine Domain auf den Projektordner, ist `/.env` über sie abrufbar.
+2. **Wirklich alle.** Auch die Hauptdomain des Pakets, automatisch angelegte Subdomains (`www.`, Vorschauadressen) und die technische Adresse des Pakets. Steht eine davon noch auf `/`, liegt der Quelltext offen.
+
+Der Beweis ist eine Anfrage, keine Überlegung — für **jede** erreichbare Adresse:
+
+```bash
+curl -sI https://ihre-domain.de/.env
+```
+
+Erwartet: `404`. Kommt `200`, ist der Zugang offen.
+
+**Netz darunter:** Im Projektwurzelverzeichnis liegt eine `.htaccess`, die jeden Zugriff abweist. Sie ist wirkungslos, solange alles richtig steht — Apache liest `.htaccess` nur vom Dokumentenstamm abwärts. Erst wenn eine Domain versehentlich auf den Projektordner zeigt, greift sie und liefert 403 statt der `.env`. Sie ersetzt das richtige Zielverzeichnis nicht, sie fängt nur dessen Fehlen ab.
 
 ### Eine STRATO-Falle mit Apache
 

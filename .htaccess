@@ -1,0 +1,21 @@
+# Notbremse für den Fall, dass dieses Verzeichnis im Web landet.
+#
+# Im Normalfall ist die Datei wirkungslos: Apache liest .htaccess-Dateien nur
+# vom Dokumentenstamm abwärts. Zeigt die Domain -- wie vorgesehen -- auf
+# public/, wird diese Datei nie gelesen.
+#
+# Zeigt eine Domain versehentlich auf den Projektordner selbst, greift sie und
+# liefert 403 statt der .env mit Datenbankzugang und APP_KEY. Genau dieser
+# Fehler ist auf Webhosting-Paketen leicht gemacht und teuer.
+#
+# Sie ersetzt nicht das richtige Zielverzeichnis -- sie fängt nur dessen
+# Fehlen ab.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

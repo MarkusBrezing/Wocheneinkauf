@@ -9,6 +9,8 @@ Vier Ebenen, vier Leserkreise. Wer etwas sucht, fängt hier an.
 | **Technik** | [Wocheneinkauf-Technische-Dokumentation.md](Wocheneinkauf-Technische-Dokumentation.md) | Wer den Code weiterentwickelt. Mit UML-Diagrammen. |
 | **Datenbank** | [Wocheneinkauf-Datenbank.md](Wocheneinkauf-Datenbank.md) | Wer Abfragen schreibt oder migriert. Alle 37 Tabellen. |
 
+Für die Inbetriebnahme: [Betrieb-Strato.md](Betrieb-Strato.md) beschreibt das *Wie*, [Deployment-Protokoll.md](Deployment-Protokoll.md) hält fest, was wann tatsächlich getan wurde.
+
 Dazu die **Schrittprotokolle** `Schritt-2` bis `Schritt-9`: Was in jedem Bauabschnitt entstanden ist und warum es so entschieden wurde. Sowie [Wocheneinkauf-Seiten-und-Daten.docx](Wocheneinkauf-Seiten-und-Daten.docx) — jede Seite mit ihren Benutzeraktionen und den Tabellen dahinter.
 
 ---
