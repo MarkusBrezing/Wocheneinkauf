@@ -58,7 +58,7 @@
                                 </form>
                                 <form method="POST" action="{{ route('vorlagen.positionen.destroy', $position) }}"
                                       style="margin-top:0.4rem"
-                                      onsubmit="return confirm('„{{ $position->raw_name }}“ aus der Vorlage entfernen?')">
+                                      onsubmit="return confirm({{ Js::from($position->raw_name) }} + ' aus der Vorlage entfernen?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.2rem 0.6rem">Entfernen</button>

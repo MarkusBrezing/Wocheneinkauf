@@ -73,7 +73,7 @@
             @endunless
             <form id="marktweg{{ $markt->id }}" method="POST" hidden
                   action="{{ route('stammdaten.maerkte.destroy', $markt) }}"
-                  onsubmit="return confirm('Markt „{{ $markt->name }}“ mit allen Regalbereichen löschen?')">
+                  onsubmit="return confirm('Markt ' + {{ Js::from($markt->name) }} + ' mit allen Regalbereichen löschen?')">
                 @csrf @method('DELETE')
             </form>
         @endif
@@ -168,7 +168,7 @@
                 </form>
                 <form id="bereich{{ $bereich->id }}weg" method="POST" hidden
                       action="{{ route('stammdaten.bereiche.destroy', $bereich) }}"
-                      onsubmit="return confirm('Regalbereich „{{ $bereich->name }}“ löschen?')">
+                      onsubmit="return confirm('Regalbereich ' + {{ Js::from($bereich->name) }} + ' löschen?')">
                     @csrf @method('DELETE')
                 </form>
                 <form id="bereich{{ $bereich->id }}raus" method="POST" hidden

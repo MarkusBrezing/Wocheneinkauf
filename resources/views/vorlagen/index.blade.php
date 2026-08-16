@@ -43,7 +43,7 @@
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('vorlagen.destroy', $vorlage) }}" class="inline"
-                                  onsubmit="return confirm('Vorlage „{{ $vorlage->name }}“ löschen?')">
+                                  onsubmit="return confirm('Vorlage ' + {{ Js::from($vorlage->name) }} + ' löschen?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.2rem 0.6rem">Löschen</button>

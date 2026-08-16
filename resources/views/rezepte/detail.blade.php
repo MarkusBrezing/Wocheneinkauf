@@ -104,7 +104,7 @@
             <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.3rem 0.6rem">Speichern</button>
         </form>
         <form method="POST" action="{{ route('rezepte.zutaten.destroy', $zutat) }}" style="margin:-0.2rem 0 0.8rem"
-              onsubmit="return confirm('„{{ $zutat->raw_name }}“ entfernen?')">
+              onsubmit="return confirm({{ Js::from($zutat->raw_name) }} + ' entfernen?')">
             @csrf
             @method('DELETE')
             <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">Entfernen</button>
@@ -182,7 +182,7 @@
 
     <h2>Rezept löschen</h2>
     <form method="POST" action="{{ route('rezepte.destroy', $rezept) }}"
-          onsubmit="return confirm('Rezept „{{ $rezept->name }}“ löschen?')">
+          onsubmit="return confirm('Rezept ' + {{ Js::from($rezept->name) }} + ' löschen?')">
         @csrf
         @method('DELETE')
         <button type="submit" class="knopf-schlicht">Löschen</button>

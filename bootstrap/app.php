@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SicherheitsKopfzeilen;
 use App\Modules\Catalog\Console\InstallProductsCommand;
 use App\Modules\Catalog\Console\InstallStarterDataCommand;
 use Illuminate\Foundation\Application;
@@ -20,7 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         InstallProductsCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Schutzkopfzeilen auf jede Antwort -- auch auf Fehlerseiten und die
+        // Rechtstexte, die ohne Anmeldung erreichbar sind.
+        $middleware->append(SicherheitsKopfzeilen::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

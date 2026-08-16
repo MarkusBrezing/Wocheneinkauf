@@ -69,7 +69,7 @@
 
     <footer class="fuss">
         <form method="POST" action="{{ route('einkaufsliste.archivieren') }}"
-              onsubmit="return confirm('Einkauf beenden?{{ $offen > 0 ? ' Die '.$offen.' fehlenden Artikel kommen auf die neue Liste.' : '' }}')">
+              onsubmit="return confirm('Einkauf beenden?' + {{ Js::from($offen > 0 ? ' Die '.$offen.' fehlenden Artikel kommen auf die neue Liste.' : '') }})">
             @csrf
             {{-- Was nicht abgehakt ist, hat gefehlt und wandert mit. --}}
             <input type="hidden" name="offene_uebernehmen" value="1">

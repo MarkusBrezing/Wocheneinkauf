@@ -114,7 +114,7 @@
 
         <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-top:1rem">
             <button type="submit" class="loeschen"
-                    onclick="return confirm('Wirklich alle Stammdaten von {{ $family->name }} löschen? Das lässt sich nicht rückgängig machen.')">
+                    onclick="return confirm('Wirklich alle Stammdaten von ' + {{ Js::from($family->name) }} + ' löschen? Das lässt sich nicht rückgängig machen.')">
                 Alle Stammdaten löschen
             </button>
             <a href="{{ route('stammdaten.produkte.index') }}" class="knopf knopf-schlicht">Abbrechen</a>

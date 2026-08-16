@@ -239,7 +239,7 @@
                                     <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.3rem 0.7rem">Speichern</button>
                                     <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.3rem 0.7rem"
                                             form="loeschen{{ $item->getKey() }}"
-                                            onclick="return confirm('„{{ $item->raw_name }}“ von der Liste nehmen?')">Löschen</button>
+                                            onclick="return confirm({{ Js::from($item->raw_name) }} + ' von der Liste nehmen?')">Löschen</button>
                                 </form>
 
                                 {{-- Getrenntes Formular, damit der Löschknopf in

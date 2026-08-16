@@ -6,6 +6,7 @@ use App\Core\Support\FamilyContext;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -46,6 +47,17 @@ class AppServiceProvider extends ServiceProvider
 
             return 'Database\\Factories\\'.$module.'\\'.class_basename($modelName).'Factory';
         });
+
+        /*
+         * Passwortregel: Laenge statt Zeichenarten.
+         *
+         * Zwoelf Zeichen sind schwerer zu raten als acht mit Sonderzeichen,
+         * und sie fuehren nicht dazu, dass jemand "Passwort1!" waehlt und
+         * aufschreibt. Bewusst *ohne* uncompromised(): Die Pruefung fragt
+         * einen fremden Dienst, und die Anwendung kommt sonst ohne jede
+         * Verbindung nach draussen aus.
+         */
+        Password::defaults(fn () => Password::min(12));
 
         // Pflichtangaben in Impressum und Datenschutzerklaerung. Fehlt eine,
         // steht dort eine sichtbare Luecke statt einer stillen leeren Zeile --

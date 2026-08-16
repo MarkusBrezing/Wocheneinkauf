@@ -65,7 +65,7 @@
                             <td>
                                 @unless ($mitglied->is(auth()->user()))
                                     <form method="POST" action="{{ route('family.members.destroy', $mitglied->public_id) }}" class="inline"
-                                          onsubmit="return confirm('{{ $mitglied->name }} wirklich aus der Familie entfernen?')">
+                                          onsubmit="return confirm({{ Js::from($mitglied->name) }} + ' wirklich aus der Familie entfernen?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.2rem 0.6rem">Entfernen</button>

@@ -182,7 +182,7 @@
         </form>
         <form id="loeschen{{ $produkt->id }}" method="POST"
               action="{{ route('stammdaten.produkte.destroy', $produkt) }}" hidden
-              onsubmit="return confirm('Artikel „{{ $produkt->name }}“ löschen?')">
+              onsubmit="return confirm('Artikel ' + {{ Js::from($produkt->name) }} + ' löschen?')">
             @csrf @method('DELETE')
         </form>
     @endforeach

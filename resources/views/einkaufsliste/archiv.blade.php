@@ -37,7 +37,7 @@
                             </form>
                             @if ($darfLoeschen)
                                 <form method="POST" action="{{ route('einkaufsliste.archiv.destroy', $eintrag) }}" class="inline"
-                                      onsubmit="return confirm('Archiveintrag „{{ $eintrag->anzeigename() }}“ endgültig löschen?')">
+                                      onsubmit="return confirm('Archiveintrag ' + {{ Js::from($eintrag->anzeigename()) }} + ' endgültig löschen?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.2rem 0.6rem">Löschen</button>

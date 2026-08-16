@@ -62,13 +62,17 @@ Route::get('/health', function () {
     // kein Ausfall, aber ein Deployment, das nur halb durchgelaufen ist.
     $gesund = $db === 'up' && ($migrationen['offen'] ?? 0) === 0;
 
+    /*
+     * Bewusst wortkarg: Der Endpunkt ist ohne Anmeldung erreichbar, und wer
+     * Laravel- und PHP-Version kennt, kann gezielt nach passenden Luecken
+     * suchen. Fuer den Smoke-Test nach einem Deployment reicht, ob die
+     * Datenbank steht und ob Migrationen offen sind -- die Namen der
+     * Migrationen gehoeren nicht nach draussen.
+     */
     return response()->json([
         'status' => $gesund ? 'ok' : 'degraded',
         'db' => $db,
-        'migrationen' => $migrationen,
-        'app' => config('app.name'),
-        'laravel' => app()->version(),
-        'php' => PHP_VERSION,
+        'migrationen' => ['offen' => $migrationen['offen'] ?? null],
         'time' => now()->toIso8601String(),
     ], $gesund ? 200 : 503);
 });

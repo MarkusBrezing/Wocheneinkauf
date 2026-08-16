@@ -19,11 +19,11 @@ class HealthCheckTest extends TestCase
         $antwort->assertJsonPath('status', 'ok');
         $antwort->assertJsonPath('db', 'up');
         $antwort->assertJsonPath('migrationen.offen', 0);
-        $antwort->assertJsonStructure([
-            'status', 'db', 'app', 'laravel', 'php', 'time',
-            'migrationen' => ['ausgefuehrt', 'offen', 'letzte'],
-        ]);
-
-        $this->assertGreaterThan(0, $antwort->json('migrationen.ausgefuehrt'));
+        // Bewusst wortkarg: Versionen und Migrationsnamen gehoeren nicht an
+        // einen Endpunkt, den jeder ohne Anmeldung abrufen kann. Was der
+        // Smoke-Test nach einem Deployment braucht, bleibt.
+        $antwort->assertJsonStructure(['status', 'db', 'time', 'migrationen' => ['offen']]);
+        $antwort->assertJsonMissingPath('laravel');
+        $antwort->assertJsonMissingPath('php');
     }
 }

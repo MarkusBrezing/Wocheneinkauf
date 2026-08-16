@@ -88,7 +88,7 @@
             </form>
             <form id="wg{{ $gruppe->id }}del" method="POST"
                   action="{{ route('stammdaten.warengruppen.destroy', $gruppe) }}" hidden
-                  onsubmit="return confirm('Warengruppe „{{ $gruppe->label }}“ löschen?')">
+                  onsubmit="return confirm('Warengruppe ' + {{ Js::from($gruppe->label) }} + ' löschen?')">
                 @csrf @method('DELETE')
                 <input type="hidden" name="trotzdem" value="{{ $errors->has('gruppe') ? 1 : 0 }}">
             </form>

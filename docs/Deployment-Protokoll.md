@@ -42,6 +42,8 @@ als Nächstes ansteht.
 | A8 | Notbremse `.htaccess` im Projektwurzelverzeichnis | angelegt — liefert 403, falls eine Domain versehentlich auf den Projektordner zeigt |
 | A9 | Umfang ohne `vendor/` | 3,3 MB |
 
+| A10 | Sicherheitsprüfung der Anwendung | **1 Fund behoben** (Stored XSS), 4 Härtungen ergänzt — siehe Teil E |
+
 ### Befund A5–A7
 
 Der Betrieb ist einfacher als bei einer üblichen Laravel-Anwendung: Es braucht
@@ -188,13 +190,22 @@ curl -sI https://ihre-domain.de/.env
 - **Erwartet:** `404` (oder `403`, wenn die Notbremse aus A8 greift)
 - **Ergebnis:** _offen_
 
+### D1b · Schutzkopfzeilen kommen an
+
+```bash
+curl -sI https://ihre-domain.de/ | grep -i "content-security\|x-frame\|x-content\|referrer"
+```
+
+- **Erwartet:** vier Zeilen. Fehlen sie, filtert der Server sie heraus
+- **Ergebnis:** _offen_
+
 ### D2 · Systemstatus
 
 ```bash
 curl -s https://ihre-domain.de/health
 ```
 
-- **Erwartet:** `{"status":"ok","db":"up","migrationen":{"offen":0,…}}`
+- **Erwartet:** `{"status":"ok","db":"up","migrationen":{"offen":0},…}`
 - **Ergebnis:** _offen_
 
 ### D3 · Registrierung von Hand
@@ -222,7 +233,12 @@ curl -s https://ihre-domain.de/health
 |---|---|
 | 16.08.2026 | Lokale Vorbereitung abgeschlossen, 330 Tests grün |
 | 16.08.2026 | `.htaccess` als Notbremse ergänzt — war in der Anleitung beschrieben, aber nicht angelegt |
-| | |
+| 16.08.2026 | **Stored XSS gefunden und behoben.** Artikel-, Rezept- und Marktnamen standen roh in `confirm()`-Aufrufen. Blade macht aus `'` ein `&#039;`, der HTML-Parser macht daraus wieder `'` — *bevor* JavaScript den Text sieht. Ein Name wie `Mehl');alert(1);//` brach damit aus dem String aus. Betroffen waren 13 Stellen; alle laufen jetzt über `Js::from()`. Ausnutzbar war es für jedes Familienmitglied gegen jedes andere, auch die Rolle `child` gegen den Inhaber |
+| 16.08.2026 | Schutzkopfzeilen ergänzt: CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy` |
+| 16.08.2026 | `/health` gekürzt — Laravel- und PHP-Version sowie Migrationsnamen standen ohne Anmeldung im Netz |
+| 16.08.2026 | Mindestlänge für Passwörter von 8 auf 12 Zeichen |
+| 16.08.2026 | `SESSION_SECURE_COOKIE` in `.env.example` aufgenommen — **im Betrieb auf `true` setzen** |
+| 16.08.2026 | Nach der Reparatur: 335 Tests grün, davon 5 neue Sicherheitstests |
 
 ### Außerhalb des Codes, vor der öffentlichen Freigabe
 
