@@ -32,7 +32,7 @@ als Nächstes ansteht.
 
 | # | Schritt | Ergebnis |
 |---|---|---|
-| A1 | Vollständiger Testlauf | **330 Tests, 1399 Zusicherungen, grün** |
+| A1 | Vollständiger Testlauf | **335 Tests, 1421 Zusicherungen, grün** |
 | A2 | Codeformat (`pint --test`) | sauber |
 | A3 | Migrationsstand lokal | 24 Migrationen, alle ausgeführt |
 | A4 | Laufzeit lokal | PHP 8.4.24, Laravel 13.23.0 |
@@ -41,8 +41,7 @@ als Nächstes ansteht.
 | A7 | Cron nötig? | **Nein.** `routes/console.php` enthält keinen Zeitplan |
 | A8 | Notbremse `.htaccess` im Projektwurzelverzeichnis | angelegt — liefert 403, falls eine Domain versehentlich auf den Projektordner zeigt |
 | A9 | Umfang ohne `vendor/` | 3,3 MB |
-
-| A10 | Sicherheitsprüfung der Anwendung | **1 Fund behoben** (Stored XSS), 4 Härtungen ergänzt — siehe Teil E |
+| A10 | Sicherheitsprüfung der Anwendung | **1 Fund behoben** (Stored XSS), 4 Härtungen — siehe Teil E |
 
 ### Befund A5–A7
 
