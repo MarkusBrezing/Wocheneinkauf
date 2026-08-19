@@ -42,6 +42,8 @@ als Nächstes ansteht.
 | A8 | Notbremse `.htaccess` im Projektwurzelverzeichnis | angelegt — liefert 403, falls eine Domain versehentlich auf den Projektordner zeigt |
 | A9 | Umfang ohne `vendor/` | 3,3 MB |
 | A10 | Sicherheitsprüfung der Anwendung | **1 Fund behoben** (Stored XSS), 4 Härtungen — siehe Teil E |
+| A11 | Auslieferungspaket gebaut | `wocheneinkauf-strato.tar.gz` (5,7 MB) und `.zip` (9,5 MB), entpackt 57 MB — mit `vendor/`, ohne Dev-Pakete, ohne `.env`, ohne `.git` |
+| A12 | `.env.produktion` als ausgefüllte Vorlage | im Paket — nur die `<…>`-Werte fehlen |
 
 ### Befund A5–A7
 
@@ -101,18 +103,22 @@ cd wocheneinkauf && composer install --no-dev --optimize-autoloader
 
 ### C2b · Code auf den Server (ohne SSH)
 
-Lokal `composer install --no-dev --optimize-autoloader`, dann per FTP hochladen
-— **einschließlich `vendor/`**. Nicht hochladen: `.env`, `node_modules/`,
-`storage/logs/`, `.git/`.
+Das Paket aus A11 ist fertig — es enthält `vendor/` bereits, ohne Dev-Pakete.
+Entpacken und den **Inhalt** (nicht den Ordner) per FTP nach
+`/wocheneinkauf/` hochladen.
 
-- **Erwartet:** Verzeichnisbaum vollständig auf dem Server
+- **Erwartet:** Verzeichnisbaum vollständig auf dem Server, `vendor/` dabei
 - **Ergebnis:** _offen_
+- **Achtung:** Manche FTP-Programme übertragen Dateien mit führendem Punkt
+  nicht. `.htaccess` in `public/` **und** im Projektwurzelverzeichnis muss
+  ankommen — sonst greift weder die Laravel-Umleitung noch die Notbremse
 
 ### C3 · `.env` anlegen
 
-Vorlage: `.env.example`. Einzutragen sind `APP_ENV=production`,
-`APP_DEBUG=false`, `APP_URL`, die Datenbankangaben aus C1 und der Mailzugang aus
-C4. Danach:
+Die mitgelieferte `.env.produktion` in `.env` umbenennen und die mit `<…>`
+markierten Werte ausfüllen — Datenbank aus C1, Mailzugang aus C4, Impressum aus
+C8. Alles Übrige ist bereits richtig eingestellt, auch
+`SESSION_SECURE_COOKIE=true`. Danach:
 
 ```bash
 php artisan key:generate
