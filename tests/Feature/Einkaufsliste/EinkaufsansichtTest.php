@@ -70,6 +70,110 @@ class EinkaufsansichtTest extends EinkaufslisteTestCase
         $this->assertTrue($milch->fresh()->is_checked);
     }
 
+    /**
+     * Abhaken aus JavaScript heraus: Derselbe Endpunkt antwortet mit Zahlen
+     * statt mit einer Umleitung.
+     *
+     * Beim Einkaufen wird der Haken hundertmal getippt. Ein voller
+     * Seitenneuaufbau je Tipper ist im Laden mit schwachem Empfang der
+     * Unterschied zwischen „geht" und „geht nicht".
+     */
+    public function test_abhaken_liefert_json_wenn_json_erwartet_wird(): void
+    {
+        [$user] = $this->familie();
+        $this->aufDieListe($user, 'Vollmilch');
+        $this->aufDieListe($user, 'Brot');
+        $milch = $this->eintrag($user, 'Vollmilch');
+
+        $this->actingAs($user)
+            ->postJson('/einkaufsliste/eintraege/'.$milch->client_uuid.'/haken')
+            ->assertOk()
+            ->assertExactJson([
+                'abgehakt' => true,
+                'offen' => 1,
+                'erledigt' => 1,
+                'gesamt' => 2,
+            ]);
+
+        $this->assertTrue($milch->fresh()->is_checked);
+
+        // Und wieder zurueck -- derselbe Endpunkt schaltet um, nicht ein.
+        $this->actingAs($user)
+            ->postJson('/einkaufsliste/eintraege/'.$milch->client_uuid.'/haken')
+            ->assertOk()
+            ->assertJsonPath('abgehakt', false)
+            ->assertJsonPath('erledigt', 0);
+    }
+
+    /**
+     * Der Schalter „N Abgehaktes zeigen" muss im Markup stehen, auch wenn noch
+     * nichts abgehakt ist.
+     *
+     * Solange jedes Abhaken die Seite neu lud, genügte ein @if. Jetzt wächst
+     * der Zähler von null hoch, ohne dass der Server noch einmal gefragt wird
+     * — ein Link, den er nicht mitgeschickt hat, kann dann nie mehr
+     * erscheinen, und das Abgehakte wäre bis zum nächsten Neuladen weg.
+     */
+    public function test_der_schalter_fuer_abgehaktes_steht_auch_bei_null_im_markup(): void
+    {
+        [$user] = $this->familie();
+        $this->aufDieListe($user, 'Vollmilch');
+
+        // Nichts abgehakt: vorhanden, aber verborgen.
+        $inhalt = $this->actingAs($user)->get('/einkaufsliste/einkaufen')->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-erledigt-schalter', $inhalt);
+        $this->assertMatchesRegularExpression('/data-erledigt-schalter\s+hidden/', $inhalt);
+
+        // Einer abgehakt: sichtbar.
+        $this->actingAs($user)->post('/einkaufsliste/eintraege/'.$this->eintrag($user, 'Vollmilch')->client_uuid.'/haken');
+
+        $inhalt = $this->actingAs($user)->get('/einkaufsliste/einkaufen')->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-erledigt-schalter', $inhalt);
+        $this->assertDoesNotMatchRegularExpression('/data-erledigt-schalter\s+hidden/', $inhalt);
+    }
+
+    /**
+     * Abgehaktes verlässt die Liste — auch ohne Seitenneuaufbau.
+     *
+     * Vor dem Umbau erledigte das der Neuaufbau: Die Ansicht lädt von Haus aus
+     * nur Offenes. Ohne ihn bliebe der Artikel durchgestrichen stehen, und die
+     * Liste würde beim Einkaufen immer unübersichtlicher statt kürzer.
+     *
+     * Ist „Abgehaktes zeigen" eingeschaltet, bleibt alles stehen — sonst
+     * verschwände genau das wieder, was man sehen wollte.
+     */
+    public function test_die_einkaufsansicht_blendet_abgehaktes_aus(): void
+    {
+        [$user] = $this->familie();
+        $this->aufDieListe($user, 'Vollmilch');
+
+        $this->actingAs($user)->get('/einkaufsliste/einkaufen')
+            ->assertOk()
+            ->assertSee('ausblenden = true', escape: false);
+
+        $this->actingAs($user)->get('/einkaufsliste/einkaufen?erledigt=1')
+            ->assertOk()
+            ->assertSee('ausblenden = false', escape: false);
+    }
+
+    /**
+     * Das Formular muss bestehen bleiben: Ohne JavaScript ist es der einzige
+     * Weg, einen Haken zu setzen.
+     */
+    public function test_ohne_javascript_bleibt_das_formular_der_weg(): void
+    {
+        [$user] = $this->familie();
+        $this->aufDieListe($user, 'Vollmilch');
+
+        $inhalt = $this->actingAs($user)->get('/einkaufsliste/einkaufen')->assertOk()->getContent();
+
+        $this->assertStringContainsString('method="POST"', $inhalt);
+        $this->assertStringContainsString('/haken', $inhalt);
+        $this->assertStringContainsString('name="_token"', $inhalt);
+    }
+
     public function test_ein_unsinniger_anker_wird_abgewiesen(): void
     {
         [$user] = $this->familie();

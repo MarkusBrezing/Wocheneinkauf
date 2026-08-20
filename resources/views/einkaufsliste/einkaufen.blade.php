@@ -9,12 +9,12 @@
     <header class="kopf">
         <div class="kopf-zeile">
             <h1>{{ $liste->anzeigename() }}</h1>
-            <span class="zaehler">{{ $erledigt }} von {{ $gesamt }}</span>
+            <span class="zaehler" data-zaehler>{{ $erledigt }} von {{ $gesamt }}</span>
         </div>
         <div class="balken" role="progressbar" aria-valuenow="{{ $erledigt }}"
              aria-valuemin="0" aria-valuemax="{{ $gesamt }}"
              aria-label="Abgehakte Artikel">
-            <div style="width: {{ $fortschritt }}%"></div>
+            <div style="width: {{ $fortschritt }}%" data-balken></div>
         </div>
     </header>
 
@@ -30,11 +30,13 @@
             {{-- Ein Formular je Zeile, die ganze Zeile ist der Knopf. Der
                  Anker führt nach dem Abhaken an dieselbe Stelle zurück --
                  ohne ihn stünde man nach jedem Tippen wieder ganz oben. --}}
-            <form method="POST" action="{{ route('einkaufsliste.eintraege.haken', $item) }}" class="zeile">
+            <form method="POST" action="{{ route('einkaufsliste.eintraege.haken', $item) }}"
+                  class="zeile @if ($item->is_checked) ist-abgehakt @endif"
+                  data-haken data-bereich="b{{ $index }}">
                 @csrf
                 <input type="hidden" name="anker" value="b{{ $index }}">
                 <button type="submit" @class(['abgehakt' => $item->is_checked])>
-                    <span class="kaestchen" aria-hidden="true">{{ $item->is_checked ? '☑' : '☐' }}</span>
+                    <span class="kaestchen" aria-hidden="true" data-kaestchen>{{ $item->is_checked ? '☑' : '☐' }}</span>
                     <span>
                         <span class="name">
                             @if ($item->mengeAnzeige() !== '')<b>{{ $item->mengeAnzeige() }}</b> @endif{{ $item->raw_name }}
@@ -58,14 +60,18 @@
         </p>
     @endforelse
 
-    @if ($erledigt > 0)
-        <p style="padding: 0.9rem; margin: 0; text-align: center;">
-            <a href="{{ route('einkaufsliste.einkaufen', $mitErledigten ? [] : ['erledigt' => 1]) }}"
-               style="color: var(--gedaempft); font-size: 0.9rem;">
-                {{ $mitErledigten ? 'Abgehaktes ausblenden' : $erledigt.' Abgehaktes zeigen' }}
-            </a>
-        </p>
-    @endif
+    {{-- Der Schalter steht immer im Markup, auch bei null Abgehakten.
+         Seit das Abhaken ohne Seitenneuaufbau läuft, wächst der Zähler von
+         null hoch, ohne dass der Server noch einmal gefragt wird -- ein Link,
+         den er nicht mitgeschickt hat, kann dann nie mehr erscheinen. Das
+         Skript blendet ihn ein, sobald der erste Haken sitzt. --}}
+    <p style="padding: 0.9rem; margin: 0; text-align: center;"
+       data-erledigt-schalter @if ($erledigt === 0 && ! $mitErledigten) hidden @endif>
+        <a href="{{ route('einkaufsliste.einkaufen', $mitErledigten ? [] : ['erledigt' => 1]) }}"
+           style="color: var(--gedaempft); font-size: 0.9rem;" data-erledigt-link>
+            {{ $mitErledigten ? 'Abgehaktes ausblenden' : $erledigt.' Abgehaktes zeigen' }}
+        </a>
+    </p>
 
     <footer class="fuss">
         <form method="POST" action="{{ route('einkaufsliste.archivieren') }}"
@@ -79,4 +85,12 @@
         <a href="{{ route('einkaufsliste.index') }}" class="schlicht"
            aria-label="Zur vollständigen Liste">&#8942;</a>
     </footer>
+
+    {{-- Im Laden zählt, was noch fehlt: Abgehaktes verschwindet aus der
+         Liste, so wie vor dem Umbau der Seitenneuaufbau es entfernt hat.
+         Ist "Abgehaktes zeigen" eingeschaltet, bleibt alles stehen. --}}
+    @include('einkaufsliste.partials.haken-sofort', [
+        'ausblenden' => ! $mitErledigten,
+        'zeigtErledigte' => $mitErledigten,
+    ])
 @endsection

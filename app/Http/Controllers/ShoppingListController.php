@@ -101,6 +101,29 @@ class ShoppingListController extends Controller
 
         $this->manager->toggle($eintrag, ! $eintrag->is_checked, $request->user());
 
+        /*
+         * Beim Einkaufen wird der Haken hundertmal getippt. Ein voller
+         * Seitenneuaufbau je Tipper ist im Laden mit schwachem Empfang der
+         * Unterschied zwischen "geht" und "geht nicht" -- deshalb antwortet
+         * derselbe Endpunkt auf eine Anfrage aus JavaScript mit den nackten
+         * Zahlen statt mit einer Umleitung.
+         *
+         * Das Formular bleibt daneben bestehen: Ohne JavaScript wird es ganz
+         * normal abgeschickt, und die Liste bleibt bedienbar.
+         */
+        if ($request->wantsJson()) {
+            $liste = $eintrag->list;
+            $offen = $liste->items()->offen()->count();
+            $erledigt = $liste->items()->where('is_checked', true)->count();
+
+            return response()->json([
+                'abgehakt' => (bool) $eintrag->fresh()->is_checked,
+                'offen' => $offen,
+                'erledigt' => $erledigt,
+                'gesamt' => $offen + $erledigt,
+            ]);
+        }
+
         return $request->filled('anker')
             ? back()->withFragment($request->string('anker')->toString())
             : back();

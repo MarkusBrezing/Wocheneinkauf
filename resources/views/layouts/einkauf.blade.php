@@ -6,6 +6,10 @@
          reicht und nicht darüber schwebt. --}}
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#457A00">
+    {{-- Das Abhaken laeuft ueber fetch statt ueber ein Formular; ohne diese
+         Marke faende das Skript keinen CSRF-Wert und liesse es beim
+         Formular. --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Einkaufen')</title>
 
     {{-- Zum Startbildschirm hinzufügen: Von hier aus startet die App auch,
@@ -108,8 +112,26 @@
         .zeile:nth-of-type(even) button { background: color-mix(in srgb, var(--hintergrund) 94%, var(--flaeche)); }
         .zeile button:active { background: var(--primaer-hell); }
         .kaestchen { font-size: 1.5rem; line-height: 1; color: var(--gedaempft); flex: 0 0 auto; }
-        .abgehakt .kaestchen { color: var(--primaer); }
-        .abgehakt .name { color: var(--gedaempft); text-decoration: line-through; }
+        /* .abgehakt kommt vom Server, .ist-abgehakt setzt das Skript beim
+           Antippen -- beide sollen gleich aussehen, damit der Zustand nicht
+           erst nach dem naechsten Seitenaufbau stimmt. */
+        .abgehakt .kaestchen,
+        .ist-abgehakt .kaestchen { color: var(--primaer); }
+        .abgehakt .name,
+        .ist-abgehakt .name { color: var(--gedaempft); text-decoration: line-through; }
+
+        /* Ging das Speichern schief, blinkt die Zeile kurz rot auf. Ein Haken,
+           der stehen bleibt, obwohl nichts gespeichert wurde, waere die
+           schlimmere Auskunft. */
+        .haken-fehler button { background: color-mix(in srgb, var(--hintergrund) 80%, #c0392b) !important; }
+
+        /* Abgehaktes verlaesst die Liste. Das Wegblenden ist kurz genug, um
+           nicht zu warten, und lang genug, um zu sehen, was getroffen wurde. */
+        .zeile.geht-weg { opacity: 0; transform: translateX(1.5rem);
+            transition: opacity 0.45s ease, transform 0.45s ease; }
+        @media (prefers-reduced-motion: reduce) {
+            .zeile.geht-weg { transition: opacity 0.2s ease; transform: none; }
+        }
         .name { font-size: 1.15rem; }
         .name b { font-weight: 600; }
         .zusatz { display: block; font-size: 0.8rem; color: var(--gedaempft); margin-top: 0.15rem; }

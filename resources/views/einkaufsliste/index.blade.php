@@ -32,7 +32,28 @@
          */
         .liste td { padding: 0.18rem 0.4rem; vertical-align: baseline; }
         .liste tr:hover td { background: var(--primaer-hell); }
-        .liste .sp-haken { width: 2.2rem; padding-right: 0; }
+        .liste .sp-haken { width: 2.2rem; padding: 0; }
+
+        /*
+         * Das Kästchen war ein Zeichen mit 0.35rem Polsterung -- etwa 20 mal
+         * 22 Pixel, und das bei bewusst kompakten Zeilen. Mit der Maus trifft
+         * man das schlecht.
+         *
+         * Zwei Antworten, ohne die Zeilen höher zu machen: Der Knopf füllt
+         * seine Zelle vollständig aus, und mit JavaScript ist die ganze Zeile
+         * anklickbar -- ausgenommen der Bearbeiten-Griff am rechten Rand.
+         */
+        .liste .sp-haken form { display: block; height: 100%; }
+        .liste .sp-haken button { display: flex; align-items: center; justify-content: center;
+            width: 100%; min-height: 1.75rem; margin: 0; padding: 0;
+            font-size: 1.05rem; line-height: 1; cursor: pointer; }
+        .liste tr.eintrag { cursor: pointer; }
+        /* Der Griff ist kein Ziel fürs Abhaken -- dort bleibt der Zeiger normal. */
+        .liste .sp-werkzeug { cursor: default; }
+        .liste .ist-abgehakt .sp-menge span,
+        .liste .ist-abgehakt .sp-name > span:first-child {
+            color: var(--gedaempft); text-decoration: line-through; }
+        .liste .haken-fehler button { background: color-mix(in srgb, var(--hintergrund) 75%, #c0392b); }
         /* Mengen rechtsbündig: So stehen die Zahlen untereinander und lassen
            sich im Vorbeigehen vergleichen. */
         .liste .sp-menge { width: 5.5rem; text-align: right; white-space: nowrap;
@@ -162,16 +183,14 @@
                 --}}
                 @foreach ($abschnitt->items as $item)
                     <tbody>
-                        <tr class="eintrag">
+                        <tr class="eintrag @if ($item->is_checked) ist-abgehakt @endif" data-haken-zeile>
                             <td class="sp-haken">
-                                <form method="POST" action="{{ route('einkaufsliste.eintraege.haken', $item) }}" class="inline">
+                                <form method="POST" action="{{ route('einkaufsliste.eintraege.haken', $item) }}" class="inline" data-haken>
                                     @csrf
                                     <button type="submit" class="knopf-schlicht"
-                                            style="margin:0;padding:0 0.35rem;font-size:1.05rem;line-height:1.4"
                                             title="{{ $item->is_checked ? 'Haken entfernen' : 'Abhaken' }}"
-                                            aria-label="{{ $item->is_checked ? 'Haken entfernen' : 'Abhaken' }}">
-                                        {{ $item->is_checked ? '☑' : '☐' }}
-                                    </button>
+                                            aria-label="{{ $item->is_checked ? 'Haken entfernen' : 'Abhaken' }}"
+                                            data-kaestchen>{{ $item->is_checked ? '☑' : '☐' }}</button>
                                 </form>
                             </td>
 
@@ -314,4 +333,6 @@
         <button type="submit">Archivieren</button>
         <a href="{{ route('einkaufsliste.neue-woche') }}" class="knopf knopf-schlicht">Assistent „Neue Woche"</a>
     </form>
+
+    @include('einkaufsliste.partials.haken-sofort')
 @endsection
