@@ -9,6 +9,7 @@ use App\Core\Support\FamilyContext;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Recipes\Models\Recipe;
 use App\Modules\Recipes\Models\Tag;
+use App\Modules\Recipes\Services\RecipeImporter;
 use Closure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -31,8 +32,62 @@ class RezeptImportTest extends TestCase
             ->assertSee('Die Antwort einfügen')
             // Der Prompt muss die Feldnamen nennen, sonst passt das Ergebnis nicht.
             ->assertSee('"zutaten"', false)
-            ->assertSee('sammelbegriff')
-            ->assertSee('"quick", "normal", "elaborate"', false);
+            ->assertSee('sammelbegriff');
+    }
+
+    /**
+     * Der Prompt und der Importer müssen dasselbe meinen.
+     *
+     * Der Prompt ist Fließtext und lädt zum Umformulieren ein -- beim Kürzen
+     * für Gemini ist genau das passiert. Fällt dabei ein zulässiger Wert
+     * heraus, merkt es niemand: Die KI liefert dann etwas, das der Importer
+     * stillschweigend verwirft, und der Anwender sucht den Fehler im Rezept.
+     *
+     * Deshalb werden die Werte hier aus dem Code gezogen, nicht abgeschrieben.
+     */
+    public function test_der_prompt_nennt_jeden_wert_den_der_importer_annimmt(): void
+    {
+        [$user] = $this->familie();
+
+        $prompt = $this->actingAs($user)->get('/rezepte/import')->assertOk()->getContent();
+
+        $fehlend = [];
+
+        // Aufwandstufen -- stehen als Rule::in im Importer.
+        foreach (['quick', 'normal', 'elaborate'] as $stufe) {
+            if (! str_contains($prompt, $stufe)) {
+                $fehlend[] = "aufwand: $stufe";
+            }
+        }
+
+        // Schlagwortarten -- die Quelle ist Tag::TYPEN.
+        foreach (array_keys(Tag::TYPEN) as $art) {
+            if (! str_contains($prompt, $art)) {
+                $fehlend[] = "schlagwort-art: $art";
+            }
+        }
+
+        // Jedes Feld, das der Importer prüft, muss im Prompt vorkommen --
+        // sonst liefert die KI es gar nicht erst.
+        foreach ([
+            'name', 'portionen', 'vorbereitung_minuten', 'koch_minuten', 'aufwand',
+            'zubereitung', 'anmerkungen', 'pflanzenpunkte', 'quelle', 'naehrwerte',
+            'zutaten', 'menge', 'einheit', 'vorrat', 'optional', 'einkaufsname',
+            'sammelbegriff', 'schlagworte',
+        ] as $feld) {
+            if (! str_contains($prompt, $feld)) {
+                $fehlend[] = "feld: $feld";
+            }
+        }
+
+        $this->assertSame([], $fehlend, 'Der Prompt hinkt dem Importer hinterher.');
+
+        // Die Obergrenze steht als Zahl im Prompt -- wird sie im Importer
+        // geaendert, muss der Prompt mit.
+        $this->assertStringContainsString(
+            (string) RecipeImporter::MAX_REZEPTE,
+            $prompt
+        );
     }
 
     public function test_die_vorschau_legt_noch_nichts_an(): void
