@@ -91,6 +91,37 @@ class SicherheitTest extends TestCase
     }
 
     /**
+     * HSTS gehört nur an verschlüsselte Antworten.
+     *
+     * Über HTTPS gesetzt schließt die Kopfzeile die Lücke, die eine
+     * Server-Umleitung offen lässt: Der Browser ruft die Adresse beim nächsten
+     * Mal gar nicht erst unverschlüsselt auf. Über HTTP gesetzt wäre sie
+     * wirkungslos -- und in der Entwicklung sperrte sie http://localhost auf
+     * Monate hinaus aus.
+     */
+    public function test_hsts_nur_ueber_https(): void
+    {
+        $this->get('http://localhost/impressum')
+            ->assertOk()
+            ->assertHeaderMissing('Strict-Transport-Security');
+
+        $antwort = $this->get('https://localhost/impressum')->assertOk();
+
+        $this->assertSame(
+            'max-age=31536000',
+            $antwort->headers->get('Strict-Transport-Security')
+        );
+
+        // includeSubDomains wuerde HTTPS auch fuer Subdomains erzwingen, die
+        // kein Zertifikat haben -- die waeren dann fuer die Dauer von max-age
+        // unerreichbar.
+        $this->assertStringNotContainsString(
+            'includeSubDomains',
+            $antwort->headers->get('Strict-Transport-Security')
+        );
+    }
+
+    /**
      * Der Endpunkt ist ohne Anmeldung erreichbar. Wer Laravel- und PHP-Version
      * kennt, sucht gezielt nach passenden Lücken.
      */
@@ -102,6 +133,36 @@ class SicherheitTest extends TestCase
         $antwort->assertJsonMissingPath('laravel');
         $antwort->assertJsonMissingPath('php');
         $antwort->assertJsonMissingPath('migrationen.letzte');
+    }
+
+    /**
+     * Die beiden .htaccess-Dateien sind ein Paar.
+     *
+     * Die Notbremse im Projektwurzelverzeichnis verbietet jeden Zugriff. Liegt
+     * das Projekt innerhalb des Dokumentenstamms -- bei STRATO der Normalfall,
+     * htdocs/wocheneinkauf/ --, liest Apache sie auf dem Weg zu
+     * public/index.php mit, und das Verbot vererbt sich. Ohne die Erlaubnis in
+     * public/ antwortet die Anwendung dann auf JEDE Adresse mit 403.
+     *
+     * Wer die eine Datei entfernt, muss die andere mitnehmen.
+     */
+    public function test_die_notbremse_sperrt_nicht_die_anwendung_selbst(): void
+    {
+        $wurzel = file_get_contents(base_path('.htaccess'));
+        $oeffentlich = file_get_contents(public_path('.htaccess'));
+
+        $this->assertMatchesRegularExpression(
+            '/^\s*Require all denied/mi',
+            $wurzel,
+            'Die Notbremse im Projektwurzelverzeichnis fehlt.'
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/^\s*Require all granted/mi',
+            $oeffentlich,
+            'public/.htaccess hebt das geerbte Verbot nicht auf -- die Anwendung '
+            .'liefert 403, sobald das Projekt im Dokumentenstamm liegt.'
+        );
     }
 
     /**

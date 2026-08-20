@@ -1,9 +1,37 @@
+# Hebt das "Require all denied" aus der Projektwurzel wieder auf -- aber nur
+# für dieses eine Verzeichnis.
+#
+# Nötig, sobald das Projekt INNERHALB des Dokumentenstamms liegt (bei STRATO
+# der Normalfall: htdocs/wocheneinkauf/). Apache liest dann die .htaccess jedes
+# übergeordneten Verzeichnisses mit, und das Verbot aus der Projektwurzel
+# vererbt sich bis hierher -- die Seite antwortet mit 403.
+#
+# Liegt das Projekt außerhalb des Dokumentenstamms, ist die Zeile wirkungslos:
+# erlaubt ist ohnehin die Voreinstellung.
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
 
     RewriteEngine On
+
+    # Unverschlüsselte Aufrufe auf HTTPS umleiten.
+    #
+    # Ohne das ist die Anwendung über http:// vollständig benutzbar, und ein
+    # Anmeldeversuch schickt das Passwort im Klartext durchs Netz -- er
+    # scheitert danach zwar an SESSION_SECURE_COOKIE, aber da ist das Passwort
+    # längst unterwegs gewesen.
+    #
+    # Zwei Bedingungen, weil beide Bauformen vorkommen: Apache mit eigenem
+    # TLS setzt HTTPS=on, hinter einem vorgelagerten Load Balancer steht die
+    # Information stattdessen in X-Forwarded-Proto.
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

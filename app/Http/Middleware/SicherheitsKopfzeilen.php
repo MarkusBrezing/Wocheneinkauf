@@ -54,6 +54,27 @@ class SicherheitsKopfzeilen
         // Rezeptadressen enthalten ULIDs, die niemanden angehen.
         $antwort->headers->set('Referrer-Policy', 'same-origin');
 
+        /*
+         * HSTS: Der Browser merkt sich, dass diese Adresse nur über HTTPS zu
+         * erreichen ist, und ruft sie beim nächsten Mal gar nicht erst
+         * unverschlüsselt auf. Das schließt die Lücke, die eine
+         * Server-Umleitung offen lässt -- die erste Anfrage geht sonst
+         * jedes Mal im Klartext hinaus, samt Sitzungscookie-Versuch.
+         *
+         * Nur über HTTPS gesetzt: Über eine unverschlüsselte Verbindung
+         * ignorieren Browser die Kopfzeile ohnehin, und in der lokalen
+         * Entwicklung würde sie den Zugriff über http://localhost auf Monate
+         * hinaus blockieren.
+         *
+         * Bewusst OHNE includeSubDomains: Das würde HTTPS auch für jede
+         * Subdomain erzwingen. einkauf.brezing.info hat kein Zertifikat --
+         * die Adresse wäre damit für die Dauer von max-age unerreichbar,
+         * auch für die 403-Sperre, die dort absichtlich steht.
+         */
+        if ($request->secure()) {
+            $antwort->headers->set('Strict-Transport-Security', 'max-age=31536000');
+        }
+
         return $antwort;
     }
 }
