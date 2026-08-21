@@ -109,4 +109,21 @@ class PantryItem extends Model
     {
         return trim(ShoppingListItem::formatiereMenge($this->target_qty).' '.($this->unit ?? ''));
     }
+
+    /**
+     * Soll und Meldebestand als Feldwert -- ganzzahlig.
+     *
+     * In der Datenbank stehen Dezimalspalten, die "2.000" liefern. In einem
+     * input[type=number] mit step="1" ist das kein gueltiger Wert: Der Browser
+     * meldet beim Speichern "Bitte eine gueltige Zahl eingeben", und zwar an
+     * jeder Zeile gleichzeitig.
+     *
+     * Bewusst ohne Nachkommastellen abgeschnitten statt gerundet: Ein aus
+     * frueheren Eingaben stammendes 2,6 wird zu 2 -- wer aufrunden will, tut
+     * es sichtbar selbst.
+     */
+    public function ganzzahlFeldwert(string $spalte): string
+    {
+        return (string) (int) ($this->{$spalte} ?? 0);
+    }
 }

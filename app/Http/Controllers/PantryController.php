@@ -55,8 +55,10 @@ class PantryController extends Controller
             'product_id' => ['required', 'integer'],
             'location' => ['nullable', 'string', 'max:80'],
             'unit' => ['nullable', 'string', 'max:20'],
-            'target_qty' => ['required', 'numeric', 'min:0', 'max:9999999'],
-            'min_qty' => ['nullable', 'numeric', 'min:0', 'max:9999999'],
+            // Ganze Zahlen: Ein Meldebestand von 2,375 Packungen ist keine
+            // Angabe, die jemand trifft oder nachhaelt.
+            'target_qty' => ['required', 'integer', 'min:0', 'max:9999999'],
+            'min_qty' => ['nullable', 'integer', 'min:0', 'max:9999999'],
             'current_qty' => ['nullable', 'numeric', 'min:0', 'max:9999999'],
             'best_before' => ['nullable', 'date'],
         ]);
@@ -86,8 +88,10 @@ class PantryController extends Controller
         $daten = $request->validate([
             'location' => ['required', 'string', 'max:80'],
             'unit' => ['nullable', 'string', 'max:20'],
-            'target_qty' => ['required', 'numeric', 'min:0', 'max:9999999'],
-            'min_qty' => ['nullable', 'numeric', 'min:0', 'max:9999999'],
+            // Ganze Zahlen: Ein Meldebestand von 2,375 Packungen ist keine
+            // Angabe, die jemand trifft oder nachhaelt.
+            'target_qty' => ['required', 'integer', 'min:0', 'max:9999999'],
+            'min_qty' => ['nullable', 'integer', 'min:0', 'max:9999999'],
             'best_before' => ['nullable', 'date'],
             'is_active' => ['nullable', 'boolean'],
         ]);

@@ -217,6 +217,104 @@ class VorratTest extends TestCase
     // ── Helfer ──────────────────────────────────────────────────────────
 
     /**
+     * Soll und Meldebestand sind ganze Zahlen.
+     *
+     * Ein Meldebestand von 2,375 Packungen ist keine Angabe, die jemand trifft
+     * oder nachhält -- und in der Anzeige waren die Nachkommanullen nur
+     * Rauschen. Der Bestand selbst bleibt dezimal: 0,5 kg Mehl gibt es sehr
+     * wohl.
+     */
+    public function test_soll_und_meldebestand_nehmen_keine_kommazahlen(): void
+    {
+        [$user] = $this->familie();
+        $mehl = $this->artikel($user, 'Mehl');
+
+        $this->actingAs($user)->from('/vorrat')->post('/vorrat', [
+            'product_id' => $mehl->id,
+            'location' => 'Speisekammer',
+            'target_qty' => 2.5,
+        ])->assertSessionHasErrors('target_qty');
+
+        $this->actingAs($user)->from('/vorrat')->post('/vorrat', [
+            'product_id' => $mehl->id,
+            'location' => 'Speisekammer',
+            'target_qty' => 3,
+            'min_qty' => 1.25,
+        ])->assertSessionHasErrors('min_qty');
+
+        // Der Bestand darf weiter krumm sein -- ein halbes Kilo Mehl ist real.
+        $this->actingAs($user)->post('/vorrat', [
+            'product_id' => $mehl->id,
+            'location' => 'Speisekammer',
+            'target_qty' => 3,
+            'current_qty' => 0.5,
+        ])->assertSessionHasNoErrors();
+    }
+
+    /**
+     * Die Eingabefelder tragen ganze Zahlen.
+     *
+     * In der Datenbank steht eine Dezimalspalte, die "3.000" liefert. In einem
+     * input[type=number] mit step="1" ist das kein gültiger Wert: Der Browser
+     * meldet beim Speichern "Bitte eine gültige Zahl eingeben" -- an jeder
+     * Zeile gleichzeitig.
+     */
+    public function test_die_felder_zeigen_ganze_zahlen(): void
+    {
+        [$user] = $this->familie();
+        $mehl = $this->artikel($user, 'Mehl');
+
+        $this->actingAs($user)->post('/vorrat', [
+            'product_id' => $mehl->id,
+            'location' => 'Speisekammer',
+            'target_qty' => 3,
+            'min_qty' => 1,
+        ]);
+
+        $inhalt = $this->actingAs($user)->get('/vorrat')->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="target_qty" type="number"', $inhalt);
+        $this->assertStringContainsString('value="3"', $inhalt);
+        $this->assertStringNotContainsString('value="3.000"', $inhalt);
+        $this->assertStringNotContainsString('step="0.001" min="0" value="1.000"', $inhalt);
+    }
+
+    /**
+     * Eine Vorratsposition lässt sich entfernen.
+     *
+     * Die Route gab es von Anfang an, aber keinen Knopf, der sie erreicht --
+     * wer einen Artikel nicht mehr im Vorrat führen wollte, hatte schlicht
+     * keinen Weg.
+     */
+    public function test_eine_position_laesst_sich_entfernen(): void
+    {
+        [$user] = $this->familie();
+        $mehl = $this->artikel($user, 'Mehl');
+
+        $this->actingAs($user)->post('/vorrat', [
+            'product_id' => $mehl->id,
+            'location' => 'Speisekammer',
+            'target_qty' => 3,
+            'current_qty' => 2,
+        ]);
+
+        $position = $this->imKontext($user, fn () => PantryItem::firstOrFail());
+
+        // Der Weg muss auf der Seite auch zu finden sein.
+        $this->actingAs($user)->get('/vorrat')->assertOk()->assertSee('Entfernen');
+
+        $this->actingAs($user)->from('/vorrat')
+            ->delete('/vorrat/'.$position->id)
+            ->assertRedirect('/vorrat');
+
+        $this->assertSame(0, $this->imKontext($user, fn () => PantryItem::count()));
+
+        // Der Buchungsverlauf haengt per cascadeOnDelete daran -- genau das
+        // sagt die Sicherheitsabfrage zu, also wird es hier geprueft.
+        $this->assertSame(0, $this->imKontext($user, fn () => PantryMovement::count()));
+    }
+
+    /**
      * @return array{0: User, 1: Family}
      */
     protected function familie(string $email = 'owner@example.test', string $name = 'Familie Test'): array

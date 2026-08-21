@@ -82,11 +82,11 @@
                             <td><strong>{{ $position->bestandAnzeige() ?: '0' }}</strong></td>
                             <td>
                                 <input form="p{{ $position->id }}" name="target_qty" type="number"
-                                       step="0.001" min="0" value="{{ $position->target_qty }}" required>
+                                       step="1" min="0" value="{{ $position->ganzzahlFeldwert('target_qty') }}" required>
                             </td>
                             <td>
                                 <input form="p{{ $position->id }}" name="min_qty" type="number"
-                                       step="0.001" min="0" value="{{ $position->min_qty }}">
+                                       step="1" min="0" value="{{ $position->ganzzahlFeldwert('min_qty') }}">
                             </td>
                             <td>
                                 <input form="p{{ $position->id }}" name="best_before" type="date"
@@ -115,6 +115,18 @@
                                 <button form="p{{ $position->id }}" type="submit" class="knopf-schlicht">Speichern</button>
                                 <a href="{{ route('vorrat.verlauf', $position) }}" class="gedaempft"
                                    style="font-size:0.85rem">Verlauf</a>
+
+                                {{-- Entfernen war bisher nur über die Route
+                                     erreichbar, nicht über die Oberfläche: Wer
+                                     einen Artikel nicht mehr im Vorrat führen
+                                     wollte, hatte keinen Weg.
+
+                                     Die Sicherheitsabfrage geht über Js::from --
+                                     ein Artikelname mit Apostroph bräche sonst
+                                     aus dem JavaScript-String aus. --}}
+                                <button form="l{{ $position->id }}" type="submit" class="knopf-schlicht"
+                                        style="color: var(--fehler)"
+                                        title="Aus dem Vorrat entfernen">Entfernen</button>
                             </td>
                         </tr>
                     @endforeach
@@ -122,9 +134,17 @@
             </table>
         </div>
 
+        {{-- Die Formulare stehen außerhalb der Tabelle und werden über das
+             form-Attribut angesprochen: Ein <form> zwischen <tr> und <td> ist
+             ungültiges HTML, der Browser wirft es aus der Tabelle heraus. --}}
         @foreach ($gruppe as $position)
             <form id="p{{ $position->id }}" method="POST" action="{{ route('vorrat.update', $position) }}" hidden>
                 @csrf @method('PUT')
+            </form>
+
+            <form id="l{{ $position->id }}" method="POST" action="{{ route('vorrat.destroy', $position) }}" hidden
+                  onsubmit="return confirm('Soll ' + {{ Js::from($position->product?->name ?? 'diese Position') }} + ' aus dem Vorrat entfernt werden? Der Buchungsverlauf geht mit verloren.')">
+                @csrf @method('DELETE')
             </form>
         @endforeach
     @empty
@@ -164,12 +184,12 @@
             </div>
             <div>
                 <label for="target_qty">Soll</label>
-                <input id="target_qty" name="target_qty" type="number" step="0.001" min="0" value="1"
+                <input id="target_qty" name="target_qty" type="number" step="1" min="0" value="1"
                        required style="margin:0;width:6rem">
             </div>
             <div>
                 <label for="min_qty">Meldebestand</label>
-                <input id="min_qty" name="min_qty" type="number" step="0.001" min="0" value="0"
+                <input id="min_qty" name="min_qty" type="number" step="1" min="0" value="0"
                        style="margin:0;width:6rem">
             </div>
             <div>
