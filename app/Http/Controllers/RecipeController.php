@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Modules\Recipes\Models\Recipe;
 use App\Modules\Recipes\Models\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 /**
@@ -16,6 +17,9 @@ use Illuminate\Validation\Rule;
  */
 class RecipeController extends Controller
 {
+    /** Auffangbecken fuer Rezepte, denen ein Kuechen-Schlagwort fehlt. */
+    public const OHNE_KUECHE = 'Ohne Küche';
+
     public function index(Request $request)
     {
         $this->currentFamily($request);
@@ -37,16 +41,50 @@ class RecipeController extends Controller
             ->with('tags')
             ->withCount('ingredients')
             ->orderBy('name')
-            ->paginate(24)
-            ->withQueryString();
+            ->get();
 
         return view('rezepte.index', [
             'rezepte' => $rezepte,
+            'kuechen' => $this->nachKueche($rezepte),
+            'favoriten' => $rezepte->where('is_favorite', true)->values(),
             'tags' => Tag::orderBy('type')->orderBy('name')->get()->groupBy('type'),
             'suche' => $suche,
             'gewaehlteTags' => array_map('intval', $tagIds),
             'nurFavoriten' => $nurFavoriten,
         ]);
+    }
+
+    /**
+     * Die Rezepte nach Kueche gliedern.
+     *
+     * Die Kueche ist die Achse, nach der man vor dem Rezeptregal sucht --
+     * "worauf haben wir Lust" beantwortet man mit italienisch, nicht mit einer
+     * Zutat. Sie ist zugleich die Achse, nach der der Wochenplan fuer
+     * Abwechslung sorgt: Eine Liste, in der eine Gruppe zwoelf und die naechste
+     * zwei Eintraege hat, erklaert, warum die Vorschlaege sich wiederholen.
+     *
+     * Ein Rezept erscheint genau EINMAL. Hat es zwei Kuechen-Schlagworte,
+     * zaehlt das alphabetisch erste -- eine Liste, in der dieselbe Zeile
+     * zweimal steht, laesst sich nicht abzaehlen.
+     *
+     * @param  Collection<int, Recipe>  $rezepte
+     * @return Collection<string, Collection<int, Recipe>>
+     */
+    protected function nachKueche(Collection $rezepte): Collection
+    {
+        return $rezepte
+            ->groupBy(function (Recipe $rezept) {
+                $kueche = $rezept->tags
+                    ->where('type', 'cuisine')
+                    ->sortBy('name')
+                    ->first();
+
+                return $kueche?->name ?? self::OHNE_KUECHE;
+            })
+            // Alphabetisch, aber "Ohne Kueche" ans Ende: Die Gruppe ist die
+            // Arbeitsliste fuer alles, was der Import unvollstaendig geliefert
+            // hat -- sichtbar, aber nicht an erster Stelle.
+            ->sortBy(fn ($rezepte, $name) => ($name === self::OHNE_KUECHE ? '1' : '0').$name);
     }
 
     /**

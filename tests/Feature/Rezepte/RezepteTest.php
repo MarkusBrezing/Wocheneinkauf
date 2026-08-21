@@ -6,6 +6,7 @@ use App\Core\Models\Family;
 use App\Core\Models\User;
 use App\Core\Services\FamilyProvisioner;
 use App\Core\Support\FamilyContext;
+use App\Http\Controllers\RecipeController;
 use App\Modules\Catalog\Models\Product;
 use App\Modules\Recipes\Models\Recipe;
 use App\Modules\Recipes\Models\Tag;
@@ -300,6 +301,196 @@ class RezepteTest extends TestCase
 
         $this->actingAs($fremd)->get('/rezepte')
             ->assertOk()->assertSee('Rinderbraten')->assertDontSee('Linsencurry');
+    }
+
+    /**
+     * Die Liste ist nach Küche gegliedert.
+     *
+     * Die Küche ist die Achse, nach der man vor dem Rezeptregal sucht -- und
+     * die, nach der der Wochenplan für Abwechslung sorgt. Eine Gruppe mit
+     * zwölf und eine mit zwei Einträgen erklärt, warum die Vorschläge sich
+     * wiederholen.
+     */
+    public function test_die_rezeptliste_ist_nach_kueche_gegliedert(): void
+    {
+        [$user] = $this->familie();
+
+        $this->mitKueche($user, 'Lasagne', 'italienisch');
+        $this->mitKueche($user, 'Linsencurry', 'indisch');
+        $this->einRezept($user, 'Etwas Namenloses');
+
+        $inhalt = $this->actingAs($user)->get('/rezepte')->assertOk()->getContent();
+
+        $this->assertStringContainsString('italienisch', $inhalt);
+        $this->assertStringContainsString('indisch', $inhalt);
+        $this->assertStringContainsString(RecipeController::OHNE_KUECHE, $inhalt);
+
+        // "Ohne Küche" ist die Arbeitsliste für unvollständige Importe --
+        // sichtbar, aber nicht an erster Stelle.
+        $this->assertGreaterThan(
+            strpos($inhalt, '>italienisch<'),
+            strpos($inhalt, '>'.RecipeController::OHNE_KUECHE.'<'),
+            'Die Restgruppe steht vor den Küchen.'
+        );
+    }
+
+    /**
+     * Zwei Küchen-Schlagworte an einem Rezept dürfen es nicht verdoppeln --
+     * eine Liste, in der dieselbe Zeile zweimal steht, lässt sich nicht
+     * abzählen. Es zählt das alphabetisch erste.
+     */
+    public function test_ein_rezept_mit_zwei_kuechen_erscheint_nur_einmal(): void
+    {
+        [$user] = $this->familie();
+
+        $rezept = $this->mitKueche($user, 'Fusion-Pfanne', 'thailändisch');
+        $this->imKontext($user, function () use ($rezept) {
+            $tag = Tag::firstOrCreate(['type' => 'cuisine', 'name' => 'italienisch']);
+            $rezept->tags()->syncWithoutDetaching([
+                $tag->getKey() => ['family_id' => $rezept->family_id],
+            ]);
+        });
+
+        $inhalt = $this->actingAs($user)->get('/rezepte')->assertOk()->getContent();
+
+        $this->assertSame(
+            1,
+            substr_count($inhalt, 'Fusion-Pfanne</strong>'),
+            'Das Rezept steht in mehr als einer Gruppe.'
+        );
+        // italienisch kommt alphabetisch vor thailaendisch.
+        $this->assertStringContainsString('>italienisch<', $inhalt);
+    }
+
+    /**
+     * Favoriten stehen doppelt: oben zum Zugreifen, unten in ihrer Küche zum
+     * Vergleichen.
+     */
+    public function test_favoriten_stehen_zusaetzlich_oben(): void
+    {
+        [$user] = $this->familie();
+
+        $rezept = $this->mitKueche($user, 'Lasagne', 'italienisch');
+        $this->actingAs($user)->post('/rezepte/'.$rezept->public_id.'/favorit');
+
+        $inhalt = $this->actingAs($user)->get('/rezepte')->assertOk()->getContent();
+
+        $this->assertStringContainsString('★ Favoriten', $inhalt);
+        $this->assertSame(2, substr_count($inhalt, 'Lasagne</strong>'));
+    }
+
+    /**
+     * Ohne Favoriten keine Favoritengruppe -- eine leere Überschrift ist kein
+     * Angebot, sondern ein Vorwurf.
+     */
+    public function test_ohne_favoriten_fehlt_die_gruppe(): void
+    {
+        [$user] = $this->familie();
+        $this->mitKueche($user, 'Lasagne', 'italienisch');
+
+        $this->actingAs($user)->get('/rezepte')->assertOk()->assertDontSee('★ Favoriten');
+    }
+
+    /**
+     * Alle Gruppen starten zugeklappt.
+     *
+     * Die Seite beginnt damit als Überblick über die Küchen statt als Wand aus
+     * Rezeptzeilen. Ein "open" an einem der Blöcke würde genau das wieder
+     * einreißen -- deshalb steht es hier als Zusicherung.
+     */
+    public function test_die_gruppen_starten_zugeklappt(): void
+    {
+        [$user] = $this->familie();
+
+        $rezept = $this->mitKueche($user, 'Lasagne', 'italienisch');
+        $this->actingAs($user)->post('/rezepte/'.$rezept->public_id.'/favorit');
+
+        $inhalt = $this->actingAs($user)->get('/rezepte')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<details class="kuechenblock', $inhalt);
+        $this->assertDoesNotMatchRegularExpression('/<details[^>]+kuechenblock[^>]*\sopen/', $inhalt);
+    }
+
+    /**
+     * Sobald ein Filter greift, stehen die Gruppen offen.
+     *
+     * Zugeklappt ist der Zustand fuers Stoebern. Bleibt es auch beim Suchen
+     * dabei, sieht man drei Ueberschriften statt der Treffer -- und haelt den
+     * Filter fuer kaputt. Genau so ist es gemeldet worden.
+     */
+    public function test_ein_filter_klappt_die_gruppen_auf(): void
+    {
+        [$user] = $this->familie();
+        $this->mitKueche($user, 'Lasagne', 'italienisch');
+        $this->mitKueche($user, 'Linsencurry', 'indisch');
+
+        // Ohne Filter: zu.
+        $this->assertDoesNotMatchRegularExpression(
+            '/<details[^>]+kuechenblock[^>]*\sopen/',
+            $this->actingAs($user)->get('/rezepte')->assertOk()->getContent()
+        );
+
+        // Mit Suche: offen, und nur der Treffer steht da.
+        $inhalt = $this->actingAs($user)->get('/rezepte?suche=Lasagne')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/<details[^>]+kuechenblock[^>]*\sopen/', $inhalt);
+        $this->assertStringContainsString('Lasagne', $inhalt);
+        $this->assertStringNotContainsString('Linsencurry', $inhalt);
+    }
+
+    /**
+     * Ein Haekchen wirkt sofort. Ohne das automatische Absenden passiert beim
+     * Anhaken nichts, bis jemand zusaetzlich auf "Suchen" klickt -- was sich
+     * anfuehlt, als taete der Filter nichts.
+     */
+    public function test_die_haekchen_senden_das_formular_ab(): void
+    {
+        [$user] = $this->familie();
+        $this->mitKueche($user, 'Lasagne', 'italienisch');
+
+        $inhalt = $this->actingAs($user)->get('/rezepte')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/name="favoriten"[^>]*onchange="this\.form\.submit\(\)"/s',
+            $inhalt
+        );
+        $this->assertMatchesRegularExpression(
+            '/name="tags\[\]"[^>]*onchange="this\.form\.submit\(\)"/s',
+            $inhalt
+        );
+    }
+
+    /**
+     * Gegliedert und geblättert vertragen sich nicht: Die Zahl im Kopf einer
+     * Gruppe wuerde etwas anderes behaupten als die Zeilen darunter.
+     */
+    public function test_die_liste_blaettert_nicht_mehr(): void
+    {
+        [$user] = $this->familie();
+
+        for ($i = 1; $i <= 30; $i++) {
+            $this->einRezept($user, 'Rezept '.str_pad((string) $i, 2, '0', STR_PAD_LEFT));
+        }
+
+        $inhalt = $this->actingAs($user)->get('/rezepte')->assertOk()->getContent();
+
+        $this->assertStringContainsString('Rezept 01', $inhalt);
+        $this->assertStringContainsString('Rezept 30', $inhalt);
+        $this->assertStringNotContainsString('pagination', $inhalt);
+    }
+
+    protected function mitKueche(User $user, string $name, string $kueche): Recipe
+    {
+        $rezept = $this->einRezept($user, $name);
+
+        $this->imKontext($user, function () use ($rezept, $kueche) {
+            $tag = Tag::firstOrCreate(['type' => 'cuisine', 'name' => $kueche]);
+            $rezept->tags()->syncWithoutDetaching([
+                $tag->getKey() => ['family_id' => $rezept->family_id],
+            ]);
+        });
+
+        return $rezept;
     }
 
     /**
