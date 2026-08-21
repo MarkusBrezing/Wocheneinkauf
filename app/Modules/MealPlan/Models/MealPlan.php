@@ -25,15 +25,21 @@ class MealPlan extends Model
     use BelongsToFamily, HasPublicId;
 
     /**
-     * Die Mahlzeiten, die ein Tag kennt.
+     * Die Mahlzeit, die ein Tag kennt.
+     *
+     * Der Wochenplan plant das Abendessen -- sonst nichts. Frühstück, Mittag
+     * und Snack standen früher zur Wahl und sind entfernt: Das Frühstück
+     * wiederholt sich, mittags ist die halbe Familie außer Haus. Übrig blieb
+     * eine Liste mit dreimal so vielen leeren Zeilen.
+     *
+     * Die Datenbankspalte lässt die alten Werte weiterhin zu -- eine
+     * Enum-Änderung wäre eine Migration für nichts. Vorhandene Zeilen dieser
+     * Arten zeigen ihren Rohwert an, statt spurlos zu verschwinden.
      *
      * @var array<string, string>
      */
     public const MAHLZEITEN = [
-        'breakfast' => 'Frühstück',
-        'lunch' => 'Mittag',
-        'dinner' => 'Abend',
-        'snack' => 'Snack',
+        'dinner' => 'Abendessen',
     ];
 
     /**
@@ -49,7 +55,27 @@ class MealPlan extends Model
      */
     public function slots(): HasMany
     {
-        return $this->hasMany(MealPlanSlot::class)->orderBy('plan_date')->orderBy('meal');
+        /*
+         * Nur die Mahlzeiten, die der Plan heute kennt.
+         *
+         * Wochen, die vor der Umstellung auf reines Abendessen angelegt
+         * wurden, haben noch Frühstücks- und Mittagszeilen in der Datenbank.
+         * Ohne diese Einschränkung stünden sie weiter im Plan -- seit der
+         * Mahlzeit-Aufkleber weg ist, als drei namenlose Zeilen je Tag.
+         *
+         * Die Einschränkung sitzt bewusst an der Beziehung und nicht in der
+         * View: So sehen auch die Druckansicht, der Übertrag auf die
+         * Einkaufsliste und die Vorschläge dasselbe. Eine Filterung nur in
+         * der Anzeige hätte bedeutet, dass ein unsichtbares Mittagessen
+         * trotzdem Zutaten auf die Einkaufsliste schiebt.
+         *
+         * Gelöscht wird nichts: Die Zeilen bleiben stehen, falls die
+         * Entscheidung je zurückgenommen wird.
+         */
+        return $this->hasMany(MealPlanSlot::class)
+            ->whereIn('meal', array_keys(self::MAHLZEITEN))
+            ->orderBy('plan_date')
+            ->orderBy('meal');
     }
 
     /**

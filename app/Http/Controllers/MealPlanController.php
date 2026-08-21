@@ -31,7 +31,7 @@ class MealPlanController extends Controller
             $this->woche($request),
             $family,
             $request->user(),
-            $this->mahlzeiten($request),
+            $this->mahlzeiten(),
         );
 
         $plan->load(['slots.recipe.tags', 'list']);
@@ -277,18 +277,17 @@ class MealPlanController extends Controller
     }
 
     /**
-     * Welche Mahlzeiten geplant werden. Standard ist das Abendessen -- alles
-     * andere waere fuer die meisten Familien Leerlauf.
+     * Welche Mahlzeiten geplant werden.
+     *
+     * Nur das Abendessen. Frueher liess sich ueber ?mahlzeiten[] auch
+     * Fruehstueck und Mittag dazuschalten; die Wahl ist entfernt, und mit ihr
+     * die Auswertung des Parameters. Eine alte Adresse mit ?mahlzeiten[]=lunch
+     * liefert deshalb keinen Fehler, sondern schlicht den Abendplan.
      *
      * @return array<int, string>
      */
-    protected function mahlzeiten(Request $request): array
+    protected function mahlzeiten(): array
     {
-        $gewaehlt = array_intersect(
-            (array) $request->query('mahlzeiten', ['dinner']),
-            array_keys(MealPlan::MAHLZEITEN),
-        );
-
-        return $gewaehlt === [] ? ['dinner'] : array_values($gewaehlt);
+        return array_keys(MealPlan::MAHLZEITEN);
     }
 }

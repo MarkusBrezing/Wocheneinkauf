@@ -16,8 +16,6 @@
             background: var(--hintergrund); }
         .slot:first-of-type { border-top: none; }
         .slot-kopf { display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
-        .slot-mahlzeit { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
-            color: var(--gedaempft); min-width: 5rem; }
         .slot-name { font-weight: 600; }
         .slot-name.gekocht { text-decoration: line-through; color: var(--gedaempft); }
         .slot-leer { color: var(--gedaempft); font-style: italic; }
@@ -38,7 +36,6 @@
         .werkzeugleiste form { margin: 0; }
         .werkzeugleiste button { margin: 0; }
         @media (max-width: 34rem) {
-            .slot-mahlzeit { min-width: 0; }
             .slot-werkzeuge { margin-left: 0; width: 100%; }
         }
     </style>
@@ -105,9 +102,6 @@
             @csrf
             <button type="submit" class="knopf-schlicht">In die Folgewoche kopieren</button>
         </form>
-        <a class="knopf knopf-schlicht" href="{{ route('wochenplan.index', ['woche' => $plan->week_start->toDateString(), 'mahlzeiten' => ['breakfast', 'lunch', 'dinner']]) }}">
-            Alle Mahlzeiten
-        </a>
         <a class="knopf knopf-schlicht" href="{{ route('wochenplan.drucken', ['woche' => $plan->week_start->toDateString()]) }}">
             Drucken
         </a>
@@ -125,7 +119,11 @@
             @foreach ($tagesSlots as $slot)
                 <div class="slot">
                     <div class="slot-kopf">
-                        <span class="slot-mahlzeit">{{ $slot->mahlzeitLabel() }}</span>
+                        {{-- Kein Mahlzeit-Aufkleber mehr: Seit der Plan nur
+                             noch Abendessen kennt, stünde auf jeder der sieben
+                             Zeilen dasselbe Wort. Der Screenreader bekommt die
+                             Mahlzeit weiterhin über die aria-label der
+                             Eingabefelder weiter unten. --}}
 
                         @if ($slot->istBelegt())
                             <span class="slot-name @if ($slot->is_cooked) gekocht @endif">

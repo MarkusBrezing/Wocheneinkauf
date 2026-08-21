@@ -65,15 +65,66 @@ class WochenplanTest extends TestCase
         $this->assertSame(7, $this->imKontext($user, fn () => MealPlanSlot::count()));
     }
 
-    public function test_zusaetzliche_mahlzeiten_ergaenzen_die_vorhandene_woche(): void
+    /**
+     * Der Plan kennt nur noch das Abendessen.
+     *
+     * Frühstück und Mittag liessen sich früher über ?mahlzeiten[] dazuschalten
+     * und legten je sieben weitere Zeilen an. Die Wahl ist entfernt: Das
+     * Frühstück wiederholt sich, mittags ist die halbe Familie außer Haus.
+     *
+     * Eine alte Adresse mit dem Parameter darf deshalb keinen Fehler liefern
+     * und erst recht keine Zeilen anlegen -- sie zeigt schlicht den Abendplan.
+     */
+    public function test_alte_mahlzeiten_parameter_legen_keine_zeilen_mehr_an(): void
     {
         [$user] = $this->familie();
 
         $this->actingAs($user)->get('/wochenplan')->assertOk();
-        $this->actingAs($user)->get('/wochenplan?mahlzeiten[]=lunch&mahlzeiten[]=dinner')->assertOk();
+        $this->actingAs($user)->get('/wochenplan?mahlzeiten[]=lunch&mahlzeiten[]=breakfast')->assertOk();
 
-        // Die sieben Abendessen bleiben, die Mittagessen kommen dazu.
-        $this->assertSame(14, $this->imKontext($user, fn () => MealPlanSlot::count()));
+        // Sieben Abende, kein Mittag, kein Frühstück.
+        $this->assertSame(7, $this->imKontext($user, fn () => MealPlanSlot::count()));
+        $this->assertSame(
+            ['dinner'],
+            $this->imKontext($user, fn () => MealPlanSlot::query()->pluck('meal')->unique()->values()->all())
+        );
+    }
+
+    /**
+     * Wochen aus der Zeit vor der Umstellung haben noch Frühstücks- und
+     * Mittagszeilen in der Datenbank. Der Plan darf sie nicht mehr zeigen --
+     * und vor allem dürfen ihre Zutaten nicht mehr auf die Einkaufsliste
+     * wandern, denn sichtbar wären sie ja nicht mehr.
+     *
+     * Gelöscht werden sie nicht: Die Einschränkung sitzt an der Beziehung.
+     */
+    public function test_alte_mittagszeilen_tauchen_im_plan_nicht_mehr_auf(): void
+    {
+        [$user] = $this->familie();
+
+        $this->actingAs($user)->get('/wochenplan')->assertOk();
+
+        $plan = $this->imKontext($user, fn () => MealPlan::firstOrFail());
+        $ersterTag = $plan->week_start->toDateString();
+
+        // Von Hand angelegt, so wie es die alte Fassung getan haette.
+        $this->imKontext($user, function () use ($plan, $ersterTag) {
+            $slot = new MealPlanSlot;
+            $slot->meal_plan_id = $plan->getKey();
+            $slot->family_id = $plan->family_id;
+            $slot->plan_date = $ersterTag;
+            $slot->meal = 'lunch';
+            $slot->save();
+        });
+
+        // In der Datenbank sind es acht -- im Plan sieben.
+        $this->assertSame(8, $this->imKontext($user, fn () => MealPlanSlot::count()));
+        $this->assertCount(7, $this->imKontext($user, fn () => MealPlan::firstOrFail()->slots));
+
+        // Und ein erneuter Aufruf legt keine achte Abendzeile an, nur weil
+        // die Mittagszeile aus der Beziehung faellt.
+        $this->actingAs($user)->get('/wochenplan')->assertOk();
+        $this->assertSame(8, $this->imKontext($user, fn () => MealPlanSlot::count()));
     }
 
     public function test_die_druckansicht_zeigt_die_woche(): void
