@@ -90,6 +90,36 @@ class RezeptImportTest extends TestCase
         );
     }
 
+    /**
+     * Der Weg zum Import muss als Knopf dastehen, nicht als graue Fußnote.
+     *
+     * Vorher hing er zwischen Rezeptzähler und Filter in einer .gedaempft-Zeile
+     * -- er las sich wie eine Randbemerkung, dabei ist er einer von zwei
+     * Gründen, warum jemand die Rezeptseite überhaupt öffnet.
+     */
+    public function test_die_rezeptseite_fuehrt_als_knopf_zum_import(): void
+    {
+        [$user] = $this->familie();
+
+        $inhalt = $this->actingAs($user)->get('/rezepte')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]+href="[^"]*\/rezepte\/import"[^>]+class="knopf knopf-akzent"/',
+            $inhalt,
+            'Der Einstieg zur Rezept-KI ist kein hervorgehobener Knopf mehr.'
+        );
+
+        $this->assertStringContainsString('Rezept KI', $inhalt);
+
+        // "Neues Rezept" tritt bewusst zurueck: Zwei gefuellte Knoepfe
+        // nebeneinander heben sich gegenseitig auf.
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]+href="[^"]*\/rezepte\/neu"[^>]+class="knopf knopf-schlicht"/',
+            $inhalt,
+            '"Neues Rezept" nimmt der Hervorhebung die Wirkung.'
+        );
+    }
+
     public function test_die_vorschau_legt_noch_nichts_an(): void
     {
         [$user] = $this->familie();

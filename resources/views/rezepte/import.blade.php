@@ -25,6 +25,18 @@
             color: var(--gedaempft); }
         .rezeptliste td { vertical-align: top; }
         .rezeptliste .zutaten { font-size: 0.85rem; color: var(--gedaempft); }
+
+        /*
+         * Der eigentliche Auftrag -- der Satz, den man selbst schreibt.
+         * Er stand mitten in einem grauen Absatz und ging darin unter, dabei
+         * ist er das Einzige auf dieser Seite, das vom Anwender kommt.
+         * Terrakotta ist laut Palette die Farbe für das, was auffallen soll.
+         */
+        .auftragsbeispiel { margin: 0.5rem 0 1.25rem; padding: 0.7rem 1rem;
+            border-left: 4px solid var(--akzent); background: var(--akzent-hell);
+            border-radius: 0 8px 8px 0; color: var(--text); font-size: 1.05rem; }
+        .auftragsbeispiel .wozu { display: block; font-size: 0.8rem; color: var(--gedaempft);
+            margin-bottom: 0.15rem; }
     </style>
 
     <p><a href="{{ route('rezepte.index') }}">‹ Zurück zu den Rezepten</a></p>
@@ -41,8 +53,12 @@
         <h2>Schritt 1 · Den Auftrag an die KI kopieren</h2>
         <p class="gedaempft">
             Der Text unten beschreibt das Format so genau, dass das Ergebnis ohne Nacharbeit
-            hierher passt. Hängen Sie am Ende an, welche Rezepte Sie möchten — etwa
-            „zehn schnelle vegetarische Abendessen für vier Personen".
+            hierher passt. Hängen Sie am Ende an, welche Rezepte Sie möchten:
+        </p>
+
+        <p class="auftragsbeispiel">
+            <span class="wozu">Zum Beispiel</span>
+            zehn schnelle Abendessen für vier Personen
         </p>
 
         <div class="prompt">
