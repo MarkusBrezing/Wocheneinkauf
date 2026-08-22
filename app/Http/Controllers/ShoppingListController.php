@@ -121,6 +121,13 @@ class ShoppingListController extends Controller
                 'offen' => $offen,
                 'erledigt' => $erledigt,
                 'gesamt' => $offen + $erledigt,
+                /*
+                 * Die neue Version gehoert mit in die Antwort: Jedes Abhaken
+                 * zaehlt sie hoch. Ohne diesen Wert hielte der Abgleich in der
+                 * Einkaufsansicht die eigene Aenderung fuer eine fremde und
+                 * meldete nach jedem Tipper "die Liste hat sich geaendert".
+                 */
+                'version' => $liste->fresh()->version,
             ]);
         }
 

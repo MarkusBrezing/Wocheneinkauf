@@ -255,6 +255,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('api/einkaufsliste')->name('einkaufsliste.sync.')->group(function () {
         Route::get('/stand', [ShoppingListSyncController::class, 'show'])->name('show');
         Route::post('/stand', [ShoppingListSyncController::class, 'store'])->name('store');
+
+        // Der kleine Abgleich der Einkaufsansicht: drei Zahlen statt der
+        // ganzen Liste, damit das Nachfragen im Laden nichts kostet.
+        Route::get('/puls', [ShoppingListSyncController::class, 'puls'])->name('puls');
     });
 
     /*

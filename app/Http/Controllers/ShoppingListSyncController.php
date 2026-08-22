@@ -51,6 +51,38 @@ class ShoppingListSyncController extends Controller
     }
 
     /**
+     * Der kleine Abgleich fuer die Einkaufsansicht.
+     *
+     * Beim Einkaufen traegt oft jemand von zu Hause noch etwas nach. Die
+     * Einkaufsansicht fragt deshalb im Hintergrund nach, ob sich etwas getan
+     * hat -- und braucht dafuer genau drei Zahlen, nicht die ganze Liste.
+     *
+     * Bewusst getrennt von show(): Der vollstaendige Stand laedt jeden Eintrag
+     * samt Artikel und Maerkten nach. Alle 25 Sekunden ueber eine
+     * Mobilfunkverbindung waere das Verschwendung an einer Stelle, an der die
+     * Verbindung ohnehin schlecht ist.
+     *
+     * Die Version zaehlen die Model-Hooks der Eintraege hoch -- jedes Anlegen,
+     * Aendern und Loeschen schlaegt hier durch.
+     */
+    public function puls(Request $request): JsonResponse
+    {
+        $this->currentFamily($request);
+
+        $liste = $this->manager->current($request->user());
+
+        $offen = $liste->items()->offen()->count();
+        $erledigt = $liste->items()->where('is_checked', true)->count();
+
+        return response()->json([
+            'version' => $liste->version,
+            'offen' => $offen,
+            'erledigt' => $erledigt,
+            'gesamt' => $offen + $erledigt,
+        ]);
+    }
+
+    /**
      * Aenderungen einspielen.
      */
     public function store(Request $request): JsonResponse

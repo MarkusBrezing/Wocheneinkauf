@@ -64,6 +64,16 @@
                     anzeigen(zeile, kaestchen, daten.abgehakt);
                     zaehlerSetzen(daten);
 
+                    /*
+                     * Dem Abgleich sagen, dass diese Änderung von hier kam.
+                     * Jedes Abhaken zählt die Listenversion hoch -- ohne diese
+                     * Meldung hielte er den eigenen Tipper für einen fremden
+                     * Nachtrag und meldete ihn als solchen.
+                     */
+                    window.dispatchEvent(new CustomEvent('einkauf:eigene-aenderung', {
+                        detail: { version: daten.version, gesamt: daten.gesamt },
+                    }));
+
                     if (ausblenden && daten.abgehakt) {
                         entfernen(zeile);
                     }

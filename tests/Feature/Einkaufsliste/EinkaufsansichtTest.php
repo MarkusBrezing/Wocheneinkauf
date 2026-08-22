@@ -88,7 +88,11 @@ class EinkaufsansichtTest extends EinkaufslisteTestCase
         $this->actingAs($user)
             ->postJson('/einkaufsliste/eintraege/'.$milch->client_uuid.'/haken')
             ->assertOk()
-            ->assertExactJson([
+            // Nicht assertExactJson: Die Version ist eine laufende Zahl, ihr
+            // Wert haengt davon ab, wie viele Aenderungen der Test vorher
+            // gemacht hat. Geprueft wird sie in einem eigenen Test.
+            ->assertJsonStructure(['abgehakt', 'offen', 'erledigt', 'gesamt', 'version'])
+            ->assertJson([
                 'abgehakt' => true,
                 'offen' => 1,
                 'erledigt' => 1,
@@ -172,6 +176,77 @@ class EinkaufsansichtTest extends EinkaufslisteTestCase
         $this->assertStringContainsString('method="POST"', $inhalt);
         $this->assertStringContainsString('/haken', $inhalt);
         $this->assertStringContainsString('name="_token"', $inhalt);
+    }
+
+    /**
+     * Nachträge bemerken, während jemand im Laden steht.
+     *
+     * Der typische Fall: Einer steht vor dem Regal, jemand zu Hause fällt noch
+     * etwas ein. Ohne Abgleich merkt der Einkaufende davon nichts — die Seite
+     * wurde beim Betreten des Ladens geladen und zeigt bis zur Kasse denselben
+     * Stand.
+     */
+    public function test_der_puls_meldet_nachtraege(): void
+    {
+        [$user] = $this->familie();
+        $this->aufDieListe($user, 'Vollmilch');
+
+        $vorher = $this->actingAs($user)->getJson('/api/einkaufsliste/puls')
+            ->assertOk()
+            ->assertJsonStructure(['version', 'offen', 'erledigt', 'gesamt'])
+            ->json();
+
+        $this->assertSame(1, $vorher['gesamt']);
+
+        // Jemand trägt nach.
+        $this->aufDieListe($user, 'Brot');
+
+        $nachher = $this->actingAs($user)->getJson('/api/einkaufsliste/puls')->assertOk()->json();
+
+        $this->assertSame(2, $nachher['gesamt']);
+        $this->assertGreaterThan(
+            $vorher['version'],
+            $nachher['version'],
+            'Ein neuer Eintrag muss die Listenversion hochzählen.'
+        );
+    }
+
+    /**
+     * Der Haken-Endpunkt gibt die neue Version mit zurück.
+     *
+     * Jedes Abhaken zählt die Listenversion hoch. Ohne diesen Wert hielte der
+     * Abgleich in der Einkaufsansicht jeden eigenen Tipper für einen fremden
+     * Nachtrag — und meldete nach jedem Haken "die Liste hat sich geändert".
+     */
+    public function test_abhaken_liefert_die_neue_version_mit(): void
+    {
+        [$user] = $this->familie();
+        $this->aufDieListe($user, 'Vollmilch');
+        $milch = $this->eintrag($user, 'Vollmilch');
+
+        $vorher = $this->actingAs($user)->getJson('/api/einkaufsliste/puls')->json('version');
+
+        $antwort = $this->actingAs($user)
+            ->postJson('/einkaufsliste/eintraege/'.$milch->client_uuid.'/haken')
+            ->assertOk()
+            ->json();
+
+        $this->assertGreaterThan($vorher, $antwort['version']);
+
+        // Und der Wert stimmt mit dem überein, den der Abgleich sähe.
+        $this->assertSame(
+            $this->actingAs($user)->getJson('/api/einkaufsliste/puls')->json('version'),
+            $antwort['version']
+        );
+    }
+
+    /**
+     * Der Abgleich gehört hinter die Anmeldung -- er verrät sonst, wie viel
+     * eine fremde Familie auf der Liste hat.
+     */
+    public function test_der_puls_ist_ohne_anmeldung_nicht_zu_haben(): void
+    {
+        $this->getJson('/api/einkaufsliste/puls')->assertUnauthorized();
     }
 
     public function test_ein_unsinniger_anker_wird_abgewiesen(): void

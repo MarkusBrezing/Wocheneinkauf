@@ -125,6 +125,32 @@
            schlimmere Auskunft. */
         .haken-fehler button { background: color-mix(in srgb, var(--hintergrund) 80%, #c0392b) !important; }
 
+        /*
+         * Der Hinweis auf Nachträge sitzt UNTEN, dicht über der Fußleiste.
+         *
+         * Oben stand er zuerst -- und verdeckte dort Listenname, Zähler und
+         * Fortschrittsbalken, also genau das, woran man sich beim Einkaufen
+         * orientiert. Der Kopf ist sticky mit z-index 20; alles, was dort
+         * schwebt, nimmt ihm den Platz weg.
+         *
+         * Unten verdeckt er höchstens die letzte Zeile, liegt in Daumennähe
+         * und lässt den Rest der Ansicht in Ruhe. Verschieben tut er nichts --
+         * eine Zeile, die unter dem Daumen wegrutscht, wäre der Fehlgriff, den
+         * er vermeiden soll.
+         */
+        /* 5.5rem ist die Höhe, die body.padding-bottom für die Fußleiste
+           reserviert -- daran ausgerichtet, statt sie neu zu schätzen.
+           z-index 15 liegt über den Bereichsüberschriften (10), aber unter
+           Kopf (20) und Fußleiste (30): Beide sollen sichtbar bleiben. */
+        .nachschub { position: fixed; left: 0; right: 0; z-index: 15;
+            bottom: calc(5.7rem + env(safe-area-inset-bottom, 0px));
+            display: flex; justify-content: center; pointer-events: none; }
+        .nachschub button { pointer-events: auto; margin: 0;
+            padding: 0.4rem 0.9rem; border-radius: 999px;
+            background: var(--akzent); color: #FDFBF7; border: none;
+            font-size: 0.85rem; font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28); }
+
         /* Abgehaktes verlaesst die Liste. Das Wegblenden ist kurz genug, um
            nicht zu warten, und lang genug, um zu sehen, was getroffen wurde. */
         .zeile.geht-weg { opacity: 0; transform: translateX(1.5rem);

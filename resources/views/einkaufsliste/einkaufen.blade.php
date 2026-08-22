@@ -93,4 +93,7 @@
         'ausblenden' => ! $mitErledigten,
         'zeigtErledigte' => $mitErledigten,
     ])
+
+    {{-- Merkt, wenn jemand von zu Hause noch etwas nachträgt. --}}
+    @include('einkaufsliste.partials.nachschub')
 @endsection
