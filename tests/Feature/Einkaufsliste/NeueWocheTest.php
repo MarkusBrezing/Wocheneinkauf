@@ -66,6 +66,81 @@ class NeueWocheTest extends EinkaufslisteTestCase
         $this->assertSame(['Vollmilch'], $this->eintraege($user)->pluck('raw_name')->all());
     }
 
+    /**
+     * Alles, eine Auswahl, nichts.
+     *
+     * Vorher gab es nur die Häkchen, alle vorausgewählt. „Gar keinen
+     * Grundvorrat" hätte bedeutet, 145 Kästchen einzeln abzuwählen — das tut
+     * niemand, also war die Möglichkeit praktisch nicht vorhanden.
+     */
+    public function test_der_modus_entscheidet_ueber_den_grundvorrat(): void
+    {
+        [$user] = $this->familie();
+
+        $artikel = $this->grundvorrat($user, [
+            ['raw_name' => 'Vollmilch'],
+            ['raw_name' => 'Butter'],
+        ]);
+
+        // Keinen -- und zwar auch dann, wenn die Häkchen mitgeschickt werden.
+        // Ohne JavaScript bleiben sie sichtbar und angehakt; maßgeblich ist
+        // die Wahl darüber, nicht das, was der Browser mitsendet.
+        $this->actingAs($user)->post('/einkaufsliste/neue-woche', [
+            'grundvorrat_modus' => 'keine',
+            'grundvorrat' => $artikel->pluck('id')->all(),
+        ])->assertRedirect();
+
+        $this->assertSame([], $this->eintraege($user)->pluck('raw_name')->all());
+
+        // Alle -- ohne dass eine einzige ID mitgeschickt wird.
+        $this->actingAs($user)->post('/einkaufsliste/neue-woche', [
+            'grundvorrat_modus' => 'alle',
+            'archivieren' => 1,
+        ])->assertRedirect();
+
+        $this->assertSame(
+            ['Butter', 'Vollmilch'],
+            $this->eintraege($user)->pluck('raw_name')->sort()->values()->all()
+        );
+
+        // Auswahl -- nur was angehakt ist.
+        $this->actingAs($user)->post('/einkaufsliste/neue-woche', [
+            'grundvorrat_modus' => 'auswahl',
+            'grundvorrat' => [$artikel->firstWhere('name', 'Vollmilch')->id],
+            'archivieren' => 1,
+        ])->assertRedirect();
+
+        $this->assertSame(['Vollmilch'], $this->eintraege($user)->pluck('raw_name')->all());
+    }
+
+    /**
+     * Ein unbekannter Modus wird abgewiesen, statt still als "alle" zu gelten.
+     */
+    public function test_ein_unsinniger_modus_wird_abgewiesen(): void
+    {
+        [$user] = $this->familie();
+        $this->grundvorrat($user, [['raw_name' => 'Vollmilch']]);
+
+        $this->actingAs($user)->from('/einkaufsliste/neue-woche')
+            ->post('/einkaufsliste/neue-woche', ['grundvorrat_modus' => 'vielleicht'])
+            ->assertSessionHasErrors('grundvorrat_modus');
+    }
+
+    /**
+     * Die Maske bietet die Wahl auch wirklich an.
+     */
+    public function test_die_maske_zeigt_die_drei_moeglichkeiten(): void
+    {
+        [$user] = $this->familie();
+        $this->grundvorrat($user, [['raw_name' => 'Vollmilch']]);
+
+        $this->actingAs($user)->get('/einkaufsliste/neue-woche')
+            ->assertOk()
+            ->assertSee('value="alle"', escape: false)
+            ->assertSee('value="auswahl"', escape: false)
+            ->assertSee('value="keine"', escape: false);
+    }
+
     public function test_ohne_archivieren_bleibt_die_laufende_liste_bestehen(): void
     {
         [$user] = $this->familie();
