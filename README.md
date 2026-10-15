@@ -49,28 +49,35 @@ das Datenbankschema in
 
 ## Einrichten
 
+Der Schnellstart für eine Entwicklungsumgebung:
+
 ```bash
 git clone https://github.com/MarkusBrezing/Wocheneinkauf.git
 cd Wocheneinkauf
 composer install
 cp .env.example .env
 php artisan key:generate
-```
-
-Danach in der `.env` die Datenbank eintragen und
-
-```bash
 php artisan migrate
 ```
 
-**Der Mailversand ist keine Kür:** Die Anwendung verlangt eine bestätigte
-E-Mail-Adresse, ohne SMTP-Zugang kommt niemand über die Registrierung hinaus.
+**→ [docs/Installation.md](docs/Installation.md)** beschreibt die Einrichtung
+auf einem eigenen Server vollständig: Voraussetzungen, Webserver-Konfiguration
+für Apache und nginx, Dateirechte, erster Start — und die vier Fallstricke,
+die sich erst im Betrieb zeigen und nie in der Entwicklung.
+
+Zwei davon vorweg, weil sie am meisten Zeit kosten:
+
+- **`APP_FALLBACK_LOCALE` darf nicht `de` sein.** Sonst steht bei einer
+  fehlenden Übersetzung der Schlüssel selbst auf dem Bildschirm.
+- **Der Mailversand ist keine Kür.** Die Anwendung verlangt eine bestätigte
+  E-Mail-Adresse — ohne SMTP-Zugang kommt niemand über die Registrierung
+  hinaus, auch der Inhaber nicht.
 
 ### Tests
 
 Die Tests laufen gegen eine echte MariaDB, nicht gegen SQLite — generierte
 Spalten und zusammengesetzte Fremdschlüssel verhalten sich dort anders, und
-genau darauf ruhen die Invarianten. Eine Datenbank `wocheneinkauf_test`
+genau darauf ruht die Mandantentrennung. Eine Datenbank `wocheneinkauf_test`
 anlegen, dann:
 
 ```bash
@@ -80,7 +87,7 @@ php artisan test
 ### Betrieb
 
 [`docs/Betrieb-Strato.md`](docs/Betrieb-Strato.md) beschreibt die Einrichtung
-auf einem Webhosting-Paket, inklusive der Wege ohne SSH.
+auf einem Webhosting-Paket ohne Serverzugriff, inklusive der Wege ohne SSH.
 [`docs/Deployment-Protokoll.md`](docs/Deployment-Protokoll.md) ist das
 Protokoll einer tatsächlichen Inbetriebnahme — mit allem, was dabei
 schiefging, und warum.
