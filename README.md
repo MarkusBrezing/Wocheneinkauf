@@ -1,58 +1,97 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Wocheneinkauf
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Die Einkaufsliste einer Familie — vom Vorrat über den Wochenplan bis vor das
+Regal im Laden.
 
-## About Laravel
+Mehrere Haushaltsmitglieder teilen sich eine Liste. Wer im Laden steht, sieht
+sie nach den Regalbereichen *seines* Marktes sortiert und hakt mit dem Daumen
+ab; wer zu Hause noch etwas einfällt, trägt es nach, und es erscheint drüben
+innerhalb von Sekunden.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Gebaut für den eigenen Haushalt, veröffentlicht, weil die Aufgabe verbreitet
+ist und die Lösungen es selten sind.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Was es kann
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Bereich | |
+|---|---|
+| **Einkaufsliste** | Freitext wie „2 l Milch" wird zerlegt, einsortiert und nach Regalbereichen des Marktes geordnet |
+| **Einkaufen** | Eigene Ansicht fürs Telefon: große Trefferflächen, Abhaken ohne Seitenneuaufbau, offline lesbar |
+| **Wochenplan** | Ein Abendessen je Tag, Vorschläge mit Blick auf Abwechslung, auf Knopfdruck auf die Liste |
+| **Rezepte** | Zutaten mit dem Artikelstamm verknüpft, nach Küche gegliedert, Import über eine Sprach-KI |
+| **Vorrat** | Sollmengen je Artikel; die Bestandsaufnahme schlägt Fehlmengen vor — übernommen wird nach Bestätigung |
+| **Stammdaten** | Warengruppen, Märkte mit Regalbereichen, Artikel; ein Grundsortiment mit 145 Artikeln ist ladbar |
 
-## Learning Laravel
+Dazu: mehrere Familien sauber getrennt, Rollen vom Inhaber bis zum Kind, und
+als PWA auf dem Startbildschirm installierbar.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Das **Anwenderhandbuch** liegt in [`docs/handbuch/`](docs/handbuch/) und wird
+von der Anwendung selbst unter `/handbuch` ausgeliefert — die Markdown-Dateien
+sind die einzige Quelle, es gibt keine zweite Fassung, die veralten könnte.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Technisch
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **Laravel 13**, PHP **8.3+**, MariaDB
+- Kein Node im Betrieb, kein Queue-Worker, kein Cron — es braucht PHP, eine
+  Datenbank und einen SMTP-Zugang. Das schließt einfache Webhosting-Tarife
+  nicht aus.
+- **365 Tests**, 1.598 Zusicherungen, gegen eine echte MariaDB statt SQLite
 
-## Agentic Development
+Die Mandantentrennung liegt auf drei Ebenen: ein Global Scope auf jedem Model,
+zusammengesetzte Fremdschlüssel `(id, family_id)` in der Datenbank, und
+geprüfte Zugriffe beim Nachladen einzelner Datensätze. Der Scope scheitert
+dabei **geschlossen** — ohne Familienkontext liefert er nichts statt alles.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Eine ausführliche technische Dokumentation samt UML liegt in
+[`docs/Wocheneinkauf-Technische-Dokumentation.md`](docs/Wocheneinkauf-Technische-Dokumentation.md),
+das Datenbankschema in
+[`docs/Wocheneinkauf-Datenbank.md`](docs/Wocheneinkauf-Datenbank.md).
+
+## Einrichten
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/MarkusBrezing/Wocheneinkauf.git
+cd Wocheneinkauf
+composer install
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Danach in der `.env` die Datenbank eintragen und
 
-## Contributing
+```bash
+php artisan migrate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**Der Mailversand ist keine Kür:** Die Anwendung verlangt eine bestätigte
+E-Mail-Adresse, ohne SMTP-Zugang kommt niemand über die Registrierung hinaus.
 
-## Code of Conduct
+### Tests
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Die Tests laufen gegen eine echte MariaDB, nicht gegen SQLite — generierte
+Spalten und zusammengesetzte Fremdschlüssel verhalten sich dort anders, und
+genau darauf ruhen die Invarianten. Eine Datenbank `wocheneinkauf_test`
+anlegen, dann:
 
-## Security Vulnerabilities
+```bash
+php artisan test
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Betrieb
 
-## License
+[`docs/Betrieb-Strato.md`](docs/Betrieb-Strato.md) beschreibt die Einrichtung
+auf einem Webhosting-Paket, inklusive der Wege ohne SSH.
+[`docs/Deployment-Protokoll.md`](docs/Deployment-Protokoll.md) ist das
+Protokoll einer tatsächlichen Inbetriebnahme — mit allem, was dabei
+schiefging, und warum.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Datenschutz
+
+Kein Tracking, keine Analysewerkzeuge, keine Werbung, keine externen Inhalte,
+keine fremden Schriften — und deshalb auch kein Einwilligungsbanner. Gesetzt
+werden zwei technisch notwendige Cookies: die Sitzungskennung und ein
+CSRF-Token.
+
+## Lizenz
+
+MIT — siehe [LICENSE](LICENSE).

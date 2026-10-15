@@ -1,9 +1,16 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "brezing/wocheneinkauf",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Die Einkaufsliste einer Familie - vom Vorrat ueber den Wochenplan bis vor das Regal.",
+    "keywords": [
+        "einkaufsliste",
+        "haushalt",
+        "wochenplan",
+        "vorrat",
+        "laravel",
+        "pwa"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
