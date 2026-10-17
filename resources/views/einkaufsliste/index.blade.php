@@ -121,15 +121,30 @@
     {{--
         Artikel hinzufuegen (C-01, C-17).
 
-        Die Reihenfolge ist Absicht: erst die Warengruppe, dann die Menge, dann
-        der Artikel. Die Warengruppe steht vorn, weil sie die Vorschläge im
-        Namensfeld einschränkt -- wer "Molkereiprodukte" wählt, sucht danach
-        nicht mehr im ganzen Katalog. Menge und Name sind getrennte Felder:
-        Wer eine Zahl tippt, soll nicht im selben Feld nach dem Namen suchen.
+        Die Reihenfolge ist Absicht: erst der Artikel, dann die Menge, dann
+        die Warengruppe. Man beginnt dort, wo der Cursor steht. Ein gewählter
+        Vorschlag setzt die Warengruppe selbst und springt zur Menge -- die
+        Gruppe von Hand zu wählen ist die Ausnahme, deshalb steht sie hinten.
+        Gewählt stellt sie ihre Artikel in den Vorschlägen nach vorn.
+
+        Menge und Name sind getrennte Felder: Wer eine Zahl tippt, soll nicht
+        im selben Feld nach dem Namen suchen.
     --}}
     <form method="POST" action="{{ route('einkaufsliste.eintraege.store') }}"
           style="display:flex;gap:0.4rem;align-items:flex-end;flex-wrap:wrap">
         @csrf
+        <div style="flex:1 1 14rem">
+            <label for="text">Artikel</label>
+            <input id="text" name="text" type="text" value="{{ old('text') }}" required autofocus
+                   placeholder="Milch, Sahne, Käse …" style="margin:0"
+                   list="artikel-vorschlaege" data-gruppe="#product_group_id" data-menge="#menge"
+                   data-hinweis="#artikel-hinweis" autocomplete="off">
+        </div>
+        <div style="flex:0 0 6rem">
+            <label for="menge">Menge</label>
+            <input id="menge" name="menge" type="text" value="{{ old('menge') }}"
+                   placeholder="2 l" style="margin:0" autocomplete="off">
+        </div>
         <div>
             <label for="product_group_id">Warengruppe</label>
             <select id="product_group_id" name="product_group_id" style="margin:0;width:auto">
@@ -138,17 +153,6 @@
                     <option value="{{ $gruppe->id }}">{{ $gruppe->label }}</option>
                 @endforeach
             </select>
-        </div>
-        <div style="flex:0 0 6rem">
-            <label for="menge">Menge</label>
-            <input id="menge" name="menge" type="text" value="{{ old('menge') }}"
-                   placeholder="2 l" style="margin:0" autocomplete="off">
-        </div>
-        <div style="flex:1 1 14rem">
-            <label for="text">Artikel</label>
-            <input id="text" name="text" type="text" value="{{ old('text') }}" required autofocus
-                   placeholder="Milch" style="margin:0"
-                   list="artikel-vorschlaege" data-gruppe="#product_group_id" autocomplete="off">
         </div>
         {{-- Aktionsangebot: Wer den Prospekt durchgeht, meint mit "Butter"
              die Butter, die diese Woche im Angebot ist. Im Laden steht die
@@ -160,18 +164,23 @@
         <button type="submit" style="margin:0">Auf die Liste</button>
     </form>
 
-    <p class="gedaempft" style="margin-top:0.4rem">
+    {{-- Woher der Eintrag kommt: aus dem Katalog oder neu. Füllt die
+         Vorschlagsliste, sobald ein Vorschlag gewählt ist. --}}
+    <p id="artikel-hinweis" class="gedaempft" aria-live="polite" style="margin:0.3rem 0 0;min-height:1.35em"></p>
+
+    <p class="gedaempft" style="margin-top:0.2rem">
         In die Menge gehört alles Zahlenhafte: <code>500g</code>, <code>1-2</code>, <code>2 l</code>.
         Ein Artikel, der schon offen auf der Liste steht, wird nicht doppelt eingetragen —
         die Mengen werden addiert.
         @if ($artikelnamen->isNotEmpty())
-            Beim Tippen schlägt der <a href="{{ route('stammdaten.produkte.index') }}">Artikelkatalog</a> vor;
-            mit gewählter Warengruppe nur deren Artikel.
+            Beim Tippen schlägt der <a href="{{ route('stammdaten.produkte.index') }}">Artikelkatalog</a> vor,
+            auch ohne Umlaute, in der Mehrzahl oder mit Tippfehler. Ein gewählter Vorschlag bringt
+            seine Warengruppe mit.
         @endif
     </p>
 
     {{-- Die Vorschlagsliste für alle Eingabefelder dieser Seite --}}
-    <x-artikel-vorschlaege :artikel="$artikelnamen" />
+    <x-artikel-vorschlaege :artikel="$artikelnamen" :gruppen="$gruppen" :vorhanden="$vorhanden" />
 
     {{-- Die Liste selbst (C-06, C-16).
 
@@ -274,11 +283,11 @@
                                     </select>
                                     <input name="menge" type="text" value="{{ $item->mengeAnzeige() }}"
                                            style="margin:0;width:5.5rem" aria-label="Menge" placeholder="Menge"
-                                           autocomplete="off">
+                                           id="m{{ $item->getKey() }}" autocomplete="off">
                                     <input name="text" type="text" value="{{ $item->raw_name }}" required
                                            style="margin:0;width:auto;flex:1 1 10rem" aria-label="Artikel"
                                            list="artikel-vorschlaege" data-gruppe="#g{{ $item->getKey() }}"
-                                           autocomplete="off">
+                                           data-menge="#m{{ $item->getKey() }}" autocomplete="off">
                                     <input name="note" type="text" value="{{ $item->note }}" placeholder="Notiz"
                                            style="margin:0;width:auto" aria-label="Notiz">
                                     {{-- Das versteckte Feld steht VOR dem Kästchen:

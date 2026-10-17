@@ -53,6 +53,27 @@ class ArtikelVorschlaegeTest extends EinkaufslisteTestCase
             ->assertDontSee('artikel-katalog');
     }
 
+    /**
+     * Die Vorschläge markieren, was schon offen auf der Liste steht. Was
+     * abgehakt ist, liegt im Wagen -- das darf nicht als "steht drauf"
+     * erscheinen, sonst schreibt niemand den Nachkauf auf.
+     */
+    public function test_die_vorschlaege_kennen_die_offenen_eintraege_der_liste(): void
+    {
+        [$user] = $this->familie();
+
+        $this->imKontext($user, fn () => Product::factory()->create(['name' => 'Vollmilch']));
+        $this->aufDieListe($user, '2 l Vollmilch');
+        $this->aufDieListe($user, 'Kaffee');
+
+        $kaffee = $this->eintrag($user, 'Kaffee');
+        $this->actingAs($user)->post('/einkaufsliste/eintraege/'.$kaffee->client_uuid.'/haken')->assertRedirect();
+
+        $antwort = $this->actingAs($user)->get('/einkaufsliste')->assertOk();
+
+        $antwort->assertSee('"vorhanden":[{"name":"Vollmilch","menge":"2 l"}]', false);
+    }
+
     public function test_ein_artikelname_mit_sonderzeichen_wird_sauber_eingebettet(): void
     {
         [$user] = $this->familie();

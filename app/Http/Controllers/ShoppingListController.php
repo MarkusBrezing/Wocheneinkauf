@@ -43,11 +43,17 @@ class ShoppingListController extends Controller
             'maerkte' => Market::active()->orderBy('sort')->orderBy('name')->get(),
             'gruppen' => ProductGroup::orderBy('sort')->orderBy('label')->get(),
             'vorlagen' => ListTemplate::orderBy('sort')->orderBy('name')->get(),
-            // Vorschläge für die Eingabe -- mit Warengruppe, damit die Auswahl
-            // im Formular sie einschränken kann. 500 ist keine fachliche
-            // Grenze, sondern der Punkt, ab dem die Liste im Seitenquelltext
-            // mehr kostet, als sie beim Tippen einspart.
-            'artikelnamen' => Product::orderBy('name')->limit(500)->get(['name', 'product_group_id']),
+            // Vorschläge für die Eingabe -- mit Warengruppe und Einheit: Ein
+            // gewählter Vorschlag setzt die Gruppe und zeigt die Einheit im
+            // Mengenfeld. 500 ist keine fachliche Grenze, sondern der Punkt,
+            // ab dem die Liste im Seitenquelltext mehr kostet, als sie beim
+            // Tippen einspart.
+            'artikelnamen' => Product::orderBy('name')->limit(500)->get(['name', 'product_group_id', 'default_unit']),
+            // Was offen auf der Liste steht, markieren die Vorschläge -- wer
+            // "Milch" tippt, sieht gleich, dass schon 2 l drauf sind.
+            'vorhanden' => $liste->items()->offen()->get()
+                ->map(fn (ShoppingListItem $item) => ['name' => $item->raw_name, 'menge' => $item->mengeAnzeige()])
+                ->values(),
             'offen' => $liste->items()->offen()->count(),
             'erledigt' => $liste->items()->where('is_checked', true)->count(),
         ]);

@@ -10,11 +10,29 @@ Die Eingabe hat drei Felder, und ihre Reihenfolge hat einen Grund:
 
 | Feld | Beispiel | Wozu |
 |---|---|---|
-| **Warengruppe** | Milchprodukte | Schränkt die Vorschläge im Artikelfeld ein — steht deshalb vorn |
+| **Artikel** | Milch | Nur der Name — hier steht der Cursor, hier beginnt man |
 | **Menge** | `2 l`, `500g`, `1-2` | Alles Zahlenhafte |
-| **Artikel** | Milch | Nur der Name |
+| **Warengruppe** | Milchprodukte | Setzt ein gewählter Vorschlag selbst — steht deshalb hinten |
 
-Die Warengruppe darf auf „automatisch" bleiben; dann sortiert die Anwendung selbst ein (siehe Kapitel *Artikel und Warengruppen*). Wählen Sie eine, schlägt das Artikelfeld nur noch deren Artikel vor — bei einem Katalog mit dreihundert Einträgen ist das der Unterschied zwischen Suchen und Finden.
+### Die Vorschläge
+
+Schon beim Hineinklicken öffnet sich unter dem Artikelfeld eine Liste mit Vorschlägen aus dem Artikelkatalog. Die besten Treffer stehen oben: zuerst der genaue Name, dann Namen, die so beginnen, dann Namen, in denen ein Wort so beginnt — „sahne" findet *Saure Sahne* und *Schlagsahne*.
+
+Gefunden wird auch, was nicht ganz genau getippt ist:
+
+- **ohne Akzente und Umlaute:** „creme" findet *Crème fraîche*, „kaese" den *Frischkäse*,
+- **in Ein- und Mehrzahl:** „tomate" findet *Tomaten*,
+- **mit einem Tippfehler:** „jogurt" findet *Naturjoghurt* — aber nur, wenn sonst nichts passt.
+
+Jede Zeile zeigt rechts die **Warengruppe** des Artikels. Steht er schon offen auf der Liste, steht dort außerdem **steht drauf** mit der Menge — dann reicht es, die Menge zu ergänzen.
+
+Wählen Sie einen Vorschlag mit Klick oder mit **↓** und **Enter**. Die Anwendung trägt dann die Warengruppe ein, zeigt die übliche Einheit des Artikels im Mengenfeld und springt dorthin; ein zweites **Enter** setzt den Artikel auf die Liste. Unter der Eingabe steht, woher der Eintrag kommt: *Aus dem Katalog* oder *Neu*.
+
+Die letzte Zeile heißt immer **„…" neu aufschreiben**. Sie ist für Artikel, die es im Katalog nicht gibt; der Eintrag kommt dann ohne Katalogbezug auf die Liste und wird nach Stichworten einsortiert (siehe Kapitel *Artikel und Warengruppen*).
+
+### Warengruppe von Hand
+
+Die Warengruppe darf auf „automatisch" bleiben. Wählen Sie selbst eine, stehen deren Artikel in den Vorschlägen oben; Treffer aus anderen Warengruppen erscheinen darunter, statt zu verschwinden. Ohne getippten Namen zeigt die Liste dann alle Artikel der Gruppe.
 
 Die Menge darf leer bleiben. Erkannt werden nur **bekannte Einheiten** (g, kg, ml, l, Stück, Packung, Dose, Bund …).
 

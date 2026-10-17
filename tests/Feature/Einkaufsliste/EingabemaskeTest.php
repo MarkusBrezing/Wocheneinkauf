@@ -7,7 +7,7 @@ use App\Modules\Catalog\Models\ProductGroup;
 
 /**
  * Die Eingabemaske der Einkaufsliste: getrennte Felder für Menge und Artikel,
- * Warengruppe zuerst, Vorschläge aus der gewählten Gruppe.
+ * Artikel zuerst, die Warengruppe bringt ein gewählter Vorschlag mit.
  */
 class EingabemaskeTest extends EinkaufslisteTestCase
 {
@@ -80,10 +80,11 @@ class EingabemaskeTest extends EinkaufslisteTestCase
     }
 
     /**
-     * Die Warengruppe steht vor dem Artikelfeld, weil sie dessen Vorschläge
-     * einschränkt. Stünde sie dahinter, wäre die Auswahl zu spät getroffen.
+     * Der Artikel steht vorn, weil dort der Cursor steht und weil ein
+     * gewählter Vorschlag die Warengruppe selbst setzt. Die Gruppe von Hand
+     * zu wählen ist die Ausnahme -- sie steht deshalb hinten.
      */
-    public function test_die_warengruppe_steht_vor_dem_artikelfeld(): void
+    public function test_der_artikel_steht_vor_menge_und_warengruppe(): void
     {
         [$user] = $this->familie();
 
@@ -93,32 +94,43 @@ class EingabemaskeTest extends EinkaufslisteTestCase
         $formular = substr($formular, 0, strpos($formular, '</form>'));
 
         $this->assertLessThan(
+            strpos($formular, 'id="menge"'),
             strpos($formular, 'id="text"'),
-            strpos($formular, 'id="product_group_id"'),
-            'Die Warengruppe muss vor dem Artikelfeld stehen.'
+            'Das Artikelfeld muss vor der Menge stehen.'
         );
-        $this->assertLessThan(strpos($formular, 'id="text"'), strpos($formular, 'id="menge"'));
+        $this->assertLessThan(
+            strpos($formular, 'id="product_group_id"'),
+            strpos($formular, 'id="menge"'),
+            'Die Menge muss vor der Warengruppe stehen.'
+        );
     }
 
-    public function test_die_vorschlaege_kennen_die_warengruppe_ihrer_artikel(): void
+    public function test_die_vorschlaege_kennen_warengruppe_und_einheit_ihrer_artikel(): void
     {
         [$user] = $this->familie();
 
         $gruppe = $this->imKontext($user, fn () => ProductGroup::where('code', 'MILCH')->firstOrFail());
 
         $this->imKontext($user, function () use ($gruppe) {
-            Product::factory()->create(['name' => 'Vollmilch', 'product_group_id' => $gruppe->id]);
-            Product::factory()->create(['name' => 'Schraubenzieher', 'product_group_id' => null]);
+            Product::factory()->create(['name' => 'Vollmilch', 'product_group_id' => $gruppe->id, 'default_unit' => 'l']);
+            Product::factory()->create(['name' => 'Schraubenzieher', 'product_group_id' => null, 'default_unit' => null]);
         });
 
         $antwort = $this->actingAs($user)->get('/einkaufsliste')->assertOk();
 
-        // Der Katalog im Quelltext trägt je Artikel seine Warengruppe -- nur
-        // damit kann das Feld auf die gewählte Gruppe einschränken.
-        $antwort->assertSee('{"name":"Vollmilch","gruppe":'.$gruppe->id.'}', false);
-        $antwort->assertSee('{"name":"Schraubenzieher","gruppe":null}', false);
+        // Der Katalog im Quelltext trägt je Artikel Warengruppe und Einheit --
+        // damit setzt ein gewählter Vorschlag die Gruppe und zeigt die
+        // Einheit im Mengenfeld.
+        $antwort->assertSee('{"name":"Vollmilch","gruppe":'.$gruppe->id.',"einheit":"l"}', false);
+        $antwort->assertSee('{"name":"Schraubenzieher","gruppe":null,"einheit":null}', false);
 
-        // Und das Eingabefeld weiß, welche Auswahl es fragen muss.
+        // Die Namen der Warengruppen reisen mit, sonst stünde in jeder
+        // Vorschlagszeile nur eine Nummer.
+        $antwort->assertSee('{"id":'.$gruppe->id.',"label":"Milchprodukte"}', false);
+
+        // Und das Eingabefeld weiß, welche Auswahl und welches Mengenfeld
+        // zu ihm gehören.
         $antwort->assertSee('data-gruppe="#product_group_id"', false);
+        $antwort->assertSee('data-menge="#menge"', false);
     }
 }
