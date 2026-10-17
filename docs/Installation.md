@@ -61,8 +61,14 @@ echte MariaDB.
 ```bash
 git clone https://github.com/MarkusBrezing/Wocheneinkauf.git
 cd Wocheneinkauf
+git checkout v1.1.0
 composer install --no-dev --optimize-autoloader
 ```
+
+`git checkout` holt eine **Version** statt des Entwicklungsstands von `main`.
+Die neueste steht oben in [`CHANGELOG.md`](../CHANGELOG.md); `git tag` listet
+alle. Für den Betrieb immer eine Version — `main` kann Dinge enthalten, die
+noch in keiner stehen.
 
 Für eine Entwicklungsumgebung `composer install` ohne die beiden Schalter —
 sonst fehlen die Testwerkzeuge.
@@ -293,16 +299,80 @@ Versionsnummern.
 
 ## Aktualisieren
 
+Neue Fassungen erscheinen als **Versionen** — als Git-Tag (`v1.1.0`) und als
+Release auf GitHub. Welche Version läuft, sagt `git describe --tags`.
+
+### Zuerst lesen
+
+[`CHANGELOG.md`](../CHANGELOG.md) nennt für jede Version unter *Beim
+Aktualisieren*, ob eine Migration, eine neue Einstellung in der `.env` oder
+neue Abhängigkeiten dazukommen. Gelesen wird das für **jede** Version zwischen
+der installierten und der neuen — wer von 1.0.0 auf 1.3.0 springt, liest
+1.1.0, 1.2.0 und 1.3.0.
+
+Nennt eine davon eine Migration: vorher die Datenbank sichern.
+
 ```bash
-git pull
+mysqldump -u wocheneinkauf -p wocheneinkauf > sicherung-$(date +%F).sql
+```
+
+### Ablauf
+
+```bash
+php artisan down
+git fetch --tags
+git checkout v1.1.0
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan config:cache && php artisan route:cache && php artisan view:cache
+php artisan up
 ```
 
-Die letzte Zeile ist nicht optional, wenn die Caches aktiv sind: Eine neue
-Route existiert bei zwischengespeicherten Routen schlicht nicht, bis
-`route:cache` erneut gelaufen ist.
+- **`down` und `up`:** Dazwischen zeigt die Anwendung eine Wartungsseite statt
+  halbfertiger Zustände. Bricht ein Schritt ab, bleibt sie in der Wartung —
+  nach der Korrektur `php artisan up` nicht vergessen.
+- **Die Cache-Zeile ist nicht optional**, wenn die Caches aktiv sind: Eine neue
+  Route existiert bei zwischengespeicherten Routen schlicht nicht, bis
+  `route:cache` erneut gelaufen ist. Eine neue Einstellung aus der `.env`
+  ebenso wenig, bis `config:cache` gelaufen ist.
+- **Neue Einstellungen** aus dem CHANGELOG gehören vor der Cache-Zeile in die
+  `.env`; `.env.example` zeigt sie mit Erläuterung.
+- **Danach prüfen:** `/health` meldet `"offen":0` bei den Migrationen. Steht
+  dort eine Zahl, ist `migrate` nicht gelaufen.
+
+### Telefone und Service Worker
+
+Nichts zu tun. Seiten kommen immer zuerst aus dem Netz; der Service Worker
+bewahrt nur die letzte Einkaufsansicht für das Funkloch auf. Beim nächsten
+Aufruf mit Verbindung zeigt auch das Telefon die neue Fassung.
+
+### Zurück auf die vorige Version
+
+Hat die neuere Version eine Migration mitgebracht, passt das Schema nicht mehr
+zum älteren Code. Dann zuerst das Schema zurücknehmen, **solange noch der
+neuere Code liegt** — nur der kennt den Rückweg seiner Migration:
+
+```bash
+php artisan down
+php artisan migrate:rollback --force    # nur bei Migration, mit dem neueren Code
+git checkout v1.0.0
+composer install --no-dev --optimize-autoloader
+php artisan config:cache && php artisan route:cache && php artisan view:cache
+php artisan up
+```
+
+`migrate:rollback` nimmt den letzten Lauf von `migrate` zurück, also genau das,
+was das Update angelegt hat. Was seitdem in neuen Spalten gespeichert wurde,
+geht dabei verloren. Sicherer ist die Sicherung von vorhin: einspielen, dann
+`git checkout`.
+
+### Ohne SSH
+
+Die Version lokal auschecken, dort `composer install --no-dev
+--optimize-autoloader`, und hochladen wie bei der Einrichtung — mit `vendor/`
+und `docs/handbuch/` (siehe [Fallstricke](#docshandbuch-ist-laufzeitbestandteil)).
+Wie eine Migration ohne Konsole auf den Server kommt, beschreibt
+[Betrieb-Strato.md](Betrieb-Strato.md#11--aktualisieren).
 
 ---
 

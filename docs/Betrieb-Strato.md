@@ -234,17 +234,33 @@ Danach von Hand:
 
 ## 11 · Aktualisieren
 
+**Zuerst [`CHANGELOG.md`](../CHANGELOG.md) lesen** — für jede Version zwischen der installierten und der neuen den Abschnitt *Beim Aktualisieren*. Dort steht, ob eine Migration, eine neue Einstellung in der `.env` oder neue Abhängigkeiten dazukommen. Der allgemeine Ablauf mit Sicherung und Rückweg steht in [Installation.md](Installation.md#aktualisieren); hier nur, was bei STRATO anders ist.
+
+Mit SSH:
+
 ```bash
 cd wocheneinkauf
 php artisan down
-git pull
+git fetch --tags
+git checkout v1.1.0
 composer install --no-dev --optimize-autoloader
 php artisan migrate --force
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 php artisan up
 ```
 
-Der Service Worker kann eine alte Fassung der Einkaufsansicht zwischengespeichert haben. Er räumt beim nächsten Aufruf selbst auf; wer es erzwingen will, erhöht `VERSION` in `public/sw.js`.
+Fehlt `composer` auf dem Server, wird wie bei der Einrichtung lokal gebaut und `vendor/` hochgeladen. Meldet `php -v` in der Shell `cgi-fcgi` statt `cli`, braucht jeder Artisan-Aufruf `-q` (`php -q artisan migrate --force`), und die Erfolgsmeldung ist wertlos — geprüft wird danach `/health`.
+
+**Ohne SSH:** Die Version lokal auschecken, bauen und hochladen wie in Abschnitt 3 — mit `vendor/` und `docs/handbuch/`. Nennt das CHANGELOG eine Migration, braucht sie einen eigenen Weg:
+
+1. Lokal eine Datenbank auf denselben Stand bringen wie die auf dem Server (alte Version, `migrate`).
+2. Neue Version auschecken, dann `php artisan migrate --pretend` — das gibt das SQL aus, ohne etwas zu ändern.
+3. Dieses SQL in phpMyAdmin auf der Server-Datenbank ausführen und je Migration eine Zeile in der Tabelle `migrations` nachtragen (Name der Migrationsdatei ohne `.php`, `batch` um eins höher als der bisher höchste).
+4. `/health` muss danach `"offen":0` melden.
+
+> **Nie `schema-strato.sql` für ein Update verwenden.** Die Datei beginnt jede Tabelle mit `DROP TABLE IF EXISTS` und löscht auf einer laufenden Installation alle Daten. Sie ist nur für die Ersteinrichtung.
+
+Die Telefone brauchen nichts: Seiten kommen immer zuerst aus dem Netz, der Service Worker hält nur die letzte Einkaufsansicht für das Funkloch vor. Wer dessen eigene Dateien (`offline.html`, Symbole) ändert, erhöht `VERSION` in `public/sw.js` — das ist Sache der Entwicklung, nicht des Updates.
 
 ---
 

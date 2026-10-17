@@ -35,7 +35,7 @@ sind die einzige Quelle, es gibt keine zweite Fassung, die veralten könnte.
 - Kein Node im Betrieb, kein Queue-Worker, kein Cron — es braucht PHP, eine
   Datenbank und einen SMTP-Zugang. Das schließt einfache Webhosting-Tarife
   nicht aus.
-- **365 Tests**, 1.598 Zusicherungen, gegen eine echte MariaDB statt SQLite
+- **377 Tests**, 1.666 Zusicherungen, gegen eine echte MariaDB statt SQLite
 
 Die Mandantentrennung liegt auf drei Ebenen: ein Global Scope auf jedem Model,
 zusammengesetzte Fremdschlüssel `(id, family_id)` in der Datenbank, und
@@ -72,6 +72,14 @@ Zwei davon vorweg, weil sie am meisten Zeit kosten:
 - **Der Mailversand ist keine Kür.** Die Anwendung verlangt eine bestätigte
   E-Mail-Adresse — ohne SMTP-Zugang kommt niemand über die Registrierung
   hinaus, auch der Inhaber nicht.
+
+### Aktualisieren
+
+Neue Fassungen erscheinen als Versionen (`v1.1.0`), als Git-Tag und als
+Release. **[`CHANGELOG.md`](CHANGELOG.md)** sagt je Version, was neu ist und ob
+beim Aktualisieren etwas zu tun ist — eine Migration, eine neue Einstellung.
+Den Ablauf samt Sicherung und Rückweg beschreibt
+[docs/Installation.md](docs/Installation.md#aktualisieren).
 
 ### Tests
 
