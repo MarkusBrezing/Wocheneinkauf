@@ -64,6 +64,7 @@ class ShoppingListController extends Controller
             'menge' => ['nullable', 'string', 'max:40'],
             'text' => ['required', 'string', 'max:200'],
             'product_group_id' => ['nullable', 'integer'],
+            'angebot' => ['nullable', 'boolean'],
         ]);
 
         $eingabe = $this->parser->parse($this->zusammensetzen($daten));
@@ -73,6 +74,7 @@ class ShoppingListController extends Controller
             liste: $liste,
             eingabe: $eingabe,
             productGroupId: $daten['product_group_id'] ?? null,
+            angebot: $request->boolean('angebot'),
         );
 
         // Wer gerade nach einem Markt sortiert, soll gleich erfahren, dass er
@@ -149,11 +151,24 @@ class ShoppingListController extends Controller
             'text' => ['required', 'string', 'max:200'],
             'note' => ['nullable', 'string', 'max:160'],
             'product_group_id' => ['nullable', 'integer'],
+            'angebot' => ['nullable', 'boolean'],
         ]);
 
         $eingabe = $this->parser->parse($this->zusammensetzen($daten))->mitNotiz($daten['note'] ?? null);
 
-        $this->manager->update($eintrag, $eingabe, $daten['product_group_id'] ?? null);
+        /*
+         * Ein abgewähltes Häkchen sendet der Browser nicht. Die Maske schickt
+         * deshalb ein verstecktes angebot=0 vor dem Kästchen mit; angehakt
+         * überschreibt es der spätere Wert. Fehlt das Feld trotzdem ganz,
+         * kam der Aufruf nicht aus dieser Maske -- dann bleibt das Angebot,
+         * wie es ist.
+         */
+        $this->manager->update(
+            $eintrag,
+            $eingabe,
+            $daten['product_group_id'] ?? null,
+            $request->has('angebot') ? $request->boolean('angebot') : null,
+        );
 
         return back()->with('status', 'Eintrag gespeichert.');
     }

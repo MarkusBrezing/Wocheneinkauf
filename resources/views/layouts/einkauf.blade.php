@@ -160,6 +160,18 @@
         }
         .name { font-size: 1.15rem; }
         .name b { font-weight: 600; }
+
+        /* Aktionsangebot. Auf dem Telefon größer als am PC: Im Laden wird die
+           Liste im Gehen überflogen, und genau diese Marke soll man nicht
+           übersehen. Bei abgehakten Zeilen tritt sie mit zurück. */
+        .angebot-marke { display: inline-block; margin-left: 0.4rem;
+            padding: 0.05rem 0.45rem; border-radius: 4px; vertical-align: 0.12em;
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: var(--akzent-hell); color: var(--akzent);
+            border: 1px solid var(--akzent); }
+        .abgehakt .angebot-marke,
+        .ist-abgehakt .angebot-marke { opacity: 0.45; }
         .zusatz { display: block; font-size: 0.8rem; color: var(--gedaempft); margin-top: 0.15rem; }
 
         .fuss {

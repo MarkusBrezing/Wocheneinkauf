@@ -61,6 +61,8 @@ class ListSnapshot
             // Ausnahme (siehe Product::markets()).
             'nur_bei_maerkten' => $item->product?->markets->modelKeys() ?? [],
             'abgehakt' => $item->is_checked,
+            // Aktionsangebot -- im Laden liegt die Aktionsware oft woanders.
+            'angebot' => $item->is_offer,
             // C-09: wer den Artikel abgehakt hat.
             'abgehakt_von' => $item->checkedBy?->name,
             'abgehakt_am' => $item->checked_at?->toIso8601String(),

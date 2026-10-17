@@ -203,6 +203,12 @@ class MealPlanController extends Controller
 
         $anzahl = $this->plaene->accept($vorschlag);
 
+        // Der zweite Klick eines Doppelklicks landet hier. Eine Fehlerseite
+        // wäre falsch -- angenommen ist der Vorschlag ja, nur eben schon.
+        if ($anzahl === null) {
+            return back()->with('status', 'Der Vorschlag ist bereits übernommen.');
+        }
+
         return back()->with('status', $anzahl.' Einträge übernommen.');
     }
 

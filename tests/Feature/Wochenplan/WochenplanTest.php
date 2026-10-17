@@ -16,6 +16,7 @@ use App\Modules\Recipes\Models\RecipeIngredient;
 use App\Modules\ShoppingList\Models\ShoppingList;
 use App\Modules\ShoppingList\Models\ShoppingListItem;
 use Closure;
+use Illuminate\Database\ConcurrencyErrorDetector;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -239,6 +240,68 @@ class WochenplanTest extends TestCase
         $this->assertCount(2, $belegt);
         $this->assertSame(['suggested', 'suggested'], $belegt->pluck('origin')->all());
         $this->assertNotNull($this->imKontext($user, fn () => MealPlanSuggestion::firstOrFail())->accepted_at);
+    }
+
+    /**
+     * Der zweite Klick eines Doppelklicks.
+     *
+     * Auf dem Server brach er mit "1020 Record has changed since last read"
+     * ab: MariaDB 11.6+ verweigert mit innodb_snapshot_isolation, eine Zeile
+     * zu ändern, die seit dem eigenen Lesen ein anderer geändert hat. Lokal
+     * läuft 10.11, das die Einstellung nicht kennt -- der Absturz selbst ist
+     * hier nicht nachzustellen.
+     *
+     * Geprüft wird deshalb die Zusage, die ihn verhindert: Annehmen ist
+     * wiederholbar. Der zweite Aufruf ändert nichts und endet in einer
+     * Meldung, nicht in einer Fehlerseite.
+     */
+    public function test_ein_vorschlag_laesst_sich_gefahrlos_zweimal_annehmen(): void
+    {
+        [$user] = $this->familie();
+        $this->rezept($user, 'Linsencurry');
+        $this->rezept($user, 'Kartoffelsuppe');
+
+        $plan = $this->plan($user);
+        $this->actingAs($user)->from('/wochenplan')->post('/wochenplan/'.$plan->public_id.'/vorschlag');
+        $lauf = $this->imKontext($user, fn () => MealPlanSuggestion::firstOrFail());
+
+        $this->actingAs($user)->from('/wochenplan')
+            ->post('/wochenplan/vorschlag/'.$lauf->id.'/annehmen')
+            ->assertRedirect('/wochenplan')
+            ->assertSessionHas('status', '2 Einträge übernommen.');
+
+        $nachErstem = $this->imKontext($user, fn () => MealPlanSlot::orderBy('id')->get(['id', 'recipe_id', 'origin'])->toArray());
+
+        // Der zweite Klick: keine Fehlerseite, keine erneute Belegung.
+        $this->actingAs($user)->from('/wochenplan')
+            ->post('/wochenplan/vorschlag/'.$lauf->id.'/annehmen')
+            ->assertRedirect('/wochenplan')
+            ->assertSessionHas('status', 'Der Vorschlag ist bereits übernommen.');
+
+        $this->assertSame(
+            $nachErstem,
+            $this->imKontext($user, fn () => MealPlanSlot::orderBy('id')->get(['id', 'recipe_id', 'origin'])->toArray()),
+            'Der zweite Klick hat die Slots angefasst.'
+        );
+    }
+
+    /**
+     * Die dritte Schutzschicht verlässt sich darauf, dass Laravel den 1020 als
+     * Nebenläufigkeitsfehler erkennt -- nur dann wiederholt DB::transaction
+     * mit attempts. Fällt die Meldung in einer künftigen Laravel-Fassung aus
+     * der Liste, greift die Wiederholung still nicht mehr. Dieser Test merkt
+     * es.
+     */
+    public function test_laravel_erkennt_den_1020_als_nebenlaeufigkeitsfehler(): void
+    {
+        $fehler = new \PDOException(
+            "SQLSTATE[HY000]: General error: 1020 Record has changed since last read in table 'meal_plan_slots'"
+        );
+
+        $this->assertTrue(
+            (new ConcurrencyErrorDetector)->causedByConcurrencyError($fehler),
+            'Laravel wiederholt Transaktionen bei diesem Fehler nicht mehr.'
+        );
     }
 
     public function test_jedes_gericht_kommt_in_einer_woche_nur_einmal(): void

@@ -63,6 +63,7 @@ class ShoppingListItem extends Model
         return [
             'amount' => 'decimal:3',
             'is_checked' => 'boolean',
+            'is_offer' => 'boolean',
             'checked_at' => 'datetime',
             'sort' => 'integer',
         ];

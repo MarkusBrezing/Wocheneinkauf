@@ -40,6 +40,9 @@
                     <span>
                         <span class="name">
                             @if ($item->mengeAnzeige() !== '')<b>{{ $item->mengeAnzeige() }}</b> @endif{{ $item->raw_name }}
+                            {{-- Im Laden ist das die eigentliche Auskunft: Die
+                                 Aktionsware liegt oft woanders als die reguläre. --}}
+                            @if ($item->is_offer)<span class="angebot-marke">Angebot</span>@endif
                         </span>
                         @if ($item->note || $item->verfuegbarkeitshinweis())
                             <span class="zusatz">

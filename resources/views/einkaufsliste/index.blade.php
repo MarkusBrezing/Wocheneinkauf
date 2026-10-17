@@ -71,6 +71,22 @@
         .liste .werkzeugzeile td { padding-top: 0; }
 
         /*
+         * Aktionsangebote. Terrakotta ist laut Palette die Farbe für das, was
+         * auffallen soll -- und ein Angebot soll im Laden auffallen, sonst
+         * greift man zur regulären Packung im Kühlregal.
+         */
+        .angebot-marke { display: inline-block; margin-left: 0.35rem;
+            padding: 0 0.4rem; border-radius: 3px; vertical-align: 0.1em;
+            font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+            text-transform: uppercase; line-height: 1.5;
+            background: var(--akzent-hell); color: var(--akzent);
+            border: 1px solid var(--akzent); }
+        .angebot-wahl { display: inline-flex; align-items: center; gap: 0.3rem;
+            margin: 0; font-weight: 400; white-space: nowrap; cursor: pointer;
+            padding-bottom: 0.35rem; }
+        .angebot-wahl input { width: auto; margin: 0; accent-color: var(--akzent); }
+
+        /*
          * Die Bearbeitungszeile hängt am <details> der Zeile darüber. CSS kann
          * nicht rückwärts schauen, wohl aber vorwärts -- deshalb :has() am
          * Eintrag und der Nachbarselektor auf die Werkzeugzeile.
@@ -134,6 +150,13 @@
                    placeholder="Milch" style="margin:0"
                    list="artikel-vorschlaege" data-gruppe="#product_group_id" autocomplete="off">
         </div>
+        {{-- Aktionsangebot: Wer den Prospekt durchgeht, meint mit "Butter"
+             die Butter, die diese Woche im Angebot ist. Im Laden steht die
+             oft woanders -- auf dem Aktionstisch statt im Kühlregal. --}}
+        <label class="angebot-wahl" for="angebot" title="Im Angebot — im Laden nach dem Aktionspreis suchen">
+            <input id="angebot" name="angebot" type="checkbox" value="1" @checked(old('angebot'))>
+            Angebot
+        </label>
         <button type="submit" style="margin:0">Auf die Liste</button>
     </form>
 
@@ -202,6 +225,9 @@
 
                             <td class="sp-name">
                                 <span @class(['erledigt' => $item->is_checked])>{{ $item->raw_name }}</span>
+                                @if ($item->is_offer)
+                                    <span class="angebot-marke" title="Im Angebot">Angebot</span>
+                                @endif
                                 @if ($item->note)
                                     <span class="gedaempft zusatz">— {{ $item->note }}</span>
                                 @endif
@@ -255,6 +281,16 @@
                                            autocomplete="off">
                                     <input name="note" type="text" value="{{ $item->note }}" placeholder="Notiz"
                                            style="margin:0;width:auto" aria-label="Notiz">
+                                    {{-- Das versteckte Feld steht VOR dem Kästchen:
+                                         Abgewählt sendet der Browser das Kästchen
+                                         gar nicht, dann kommt die 0 an. Angehakt
+                                         überschreibt die spätere 1 sie. Ohne das
+                                         ließe sich ein Angebot nie wieder abwählen. --}}
+                                    <input type="hidden" name="angebot" value="0">
+                                    <label class="angebot-wahl" style="padding-bottom:0">
+                                        <input type="checkbox" name="angebot" value="1" @checked($item->is_offer)>
+                                        Angebot
+                                    </label>
                                     <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.3rem 0.7rem">Speichern</button>
                                     <button type="submit" class="knopf-schlicht" style="margin:0;padding:0.3rem 0.7rem"
                                             form="loeschen{{ $item->getKey() }}"

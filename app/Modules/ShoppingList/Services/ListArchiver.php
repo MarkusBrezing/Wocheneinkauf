@@ -114,7 +114,7 @@ class ListArchiver
      */
     protected function uebernehmen(ShoppingListItem $item, ShoppingList $ziel): ShoppingListItem
     {
-        $kopie = $item->replicate(['client_uuid', 'is_checked', 'checked_by', 'checked_at', 'deleted_at']);
+        $kopie = $item->replicate(['client_uuid', 'is_checked', 'is_offer', 'checked_by', 'checked_at', 'deleted_at']);
 
         $kopie->list_id = $ziel->getKey();
         $kopie->family_id = $ziel->family_id;
@@ -122,6 +122,12 @@ class ListArchiver
         $kopie->is_checked = false;
         $kopie->checked_by = null;
         $kopie->checked_at = null;
+
+        // Ein Angebot gilt fuer die Woche, in der es im Prospekt stand. Wer die
+        // Aktionsbutter nicht bekommen hat, braucht naechste Woche Butter --
+        // aber nicht mehr zum Aktionspreis, und die Markierung schickte ihn
+        // sonst zum Aktionstisch, auf dem sie laengst nicht mehr liegt.
+        $kopie->is_offer = false;
         $kopie->save();
 
         return $kopie;

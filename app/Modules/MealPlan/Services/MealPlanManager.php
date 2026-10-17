@@ -142,15 +142,42 @@ class MealPlanManager
     /**
      * Vorschlag annehmen (F-08): die Slots werden belegt.
      *
-     * @return int Anzahl belegter Slots
+     * Ein doppelter Klick schickt zwei Anfragen, die gleichzeitig laufen.
+     * Beide fanden die Slots leer, die erste trug ein -- und die zweite brach
+     * auf dem Server ab: "1020 Record has changed since last read". MariaDB
+     * 11.6+ schaltet innodb_snapshot_isolation standardmäßig ein und
+     * verweigert damit, eine Zeile zu ändern, die seit dem eigenen Lesen ein
+     * anderer geändert hat. MariaDB 10.11 überschrieb sie still, deshalb fiel
+     * das in der Entwicklung nie auf.
+     *
+     * Drei Schutzschichten:
+     *
+     *  1. Der Vorschlag wird als ERSTES gesperrt. Die zweite Anfrage wartet
+     *     damit auf die erste, statt neben ihr zu laufen.
+     *  2. Ist er danach schon angenommen, passiert nichts mehr. Annehmen ist
+     *     damit wiederholbar -- der zweite Klick ist harmlos.
+     *  3. Bricht trotzdem etwas mit einem Nebenläufigkeitsfehler ab, versucht
+     *     Laravel es bis zu dreimal. Es erkennt die 1020-Meldung als solchen;
+     *     beim Wiederholen greift dann Schicht 2.
+     *
+     * @return int|null Anzahl belegter Slots, oder null wenn der Vorschlag
+     *                  schon angenommen war
      */
-    public function accept(MealPlanSuggestion $lauf): int
+    public function accept(MealPlanSuggestion $lauf): ?int
     {
         return DB::transaction(function () use ($lauf) {
+            // Neu lesen statt dem gebundenen Model zu trauen: Das stammt aus
+            // der Zeit vor der Sperre und kann veraltet sein.
+            $lauf = MealPlanSuggestion::whereKey($lauf->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($lauf->accepted_at !== null) {
+                return null;
+            }
+
             $belegt = 0;
 
             foreach ($lauf->result as $eintrag) {
-                $slot = MealPlanSlot::whereKey($eintrag['slot_id'])->first();
+                $slot = MealPlanSlot::whereKey($eintrag['slot_id'])->lockForUpdate()->first();
 
                 // Wer inzwischen selbst etwas eingetragen oder gesperrt hat,
                 // behaelt es -- der Vorschlag ist aelter als die Entscheidung.
@@ -169,7 +196,7 @@ class MealPlanManager
             $lauf->forceFill(['accepted_at' => now()])->save();
 
             return $belegt;
-        });
+        }, attempts: 3);
     }
 
     /**

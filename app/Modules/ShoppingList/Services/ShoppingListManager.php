@@ -82,15 +82,31 @@ class ShoppingListManager
         ?int $productId = null,
         ?int $productGroupId = null,
         ?string $clientUuid = null,
+        bool $angebot = false,
     ): ShoppingListItem {
         return DB::transaction(function () use (
-            $liste, $eingabe, $source, $sourceRefId, $productId, $productGroupId, $clientUuid
+            $liste, $eingabe, $source, $sourceRefId, $productId, $productGroupId, $clientUuid, $angebot
         ) {
             $productId ??= Product::matchingName($eingabe->name)->value('id');
 
             $vorhanden = $this->passenderOffenerEintrag($liste, $eingabe->name, $productId);
 
             if ($vorhanden !== null) {
+                /*
+                 * Das Angebot gewinnt in eine Richtung: Wird derselbe Artikel
+                 * mit Haken nachgetragen, wird der vorhandene Eintrag zum
+                 * Angebot. Ohne Haken bleibt ein Angebot eines -- ein zweites
+                 * "Butter" aus der Vorlage soll die Aktionsbutter nicht
+                 * stillschweigend wieder zur regulären machen.
+                 *
+                 * Vor zusammenfuehren() gesetzt, damit es mit derselben
+                 * Speicherung hinausgeht und die Liste nur einmal ihre Version
+                 * hochzählt.
+                 */
+                if ($angebot) {
+                    $vorhanden->is_offer = true;
+                }
+
                 return $this->zusammenfuehren($vorhanden, $eingabe);
             }
 
@@ -103,6 +119,7 @@ class ShoppingListManager
             $item->client_uuid = $clientUuid;
             $item->product_id = $productId;
             $item->product_group_id = $this->warengruppe($productGroupId, $productId, $eingabe->name);
+            $item->is_offer = $angebot;
             $item->list_id = $liste->getKey();
             $item->family_id = $liste->family_id;
             $item->save();
@@ -198,7 +215,14 @@ class ShoppingListManager
      * "Milch" zu "Brot" darf den Eintrag nicht im Kuehlregal stehen lassen.
      * Eine ausdrueckliche Warengruppe (C-05) bleibt davon unberuehrt.
      */
-    public function update(ShoppingListItem $item, ParsedItem $eingabe, ?int $productGroupId = null): ShoppingListItem
+    /**
+     * @param  bool|null  $angebot  null heisst: nicht anfassen. Nur die
+     *                              Bearbeitungsmaske weiss, ob das Haekchen
+     *                              gemeint war -- ein anderer Aufrufer, der
+     *                              das Feld nicht kennt, soll ein Angebot
+     *                              nicht versehentlich loeschen.
+     */
+    public function update(ShoppingListItem $item, ParsedItem $eingabe, ?int $productGroupId = null, ?bool $angebot = null): ShoppingListItem
     {
         $nameGeaendert = Product::normalize($eingabe->name) !== $item->vergleichsname();
 
@@ -211,6 +235,10 @@ class ShoppingListManager
 
         if ($productGroupId !== null) {
             $item->product_group_id = $this->gruppeAusEingabe($productGroupId);
+        }
+
+        if ($angebot !== null) {
+            $item->is_offer = $angebot;
         }
 
         $item->save();

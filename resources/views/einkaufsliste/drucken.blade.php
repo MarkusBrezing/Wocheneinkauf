@@ -25,6 +25,9 @@
                 <li @class(['gedaempft' => $item->is_checked])
                     style="{{ $item->is_checked ? 'text-decoration:line-through' : '' }}">
                     @if ($item->mengeAnzeige() !== ''){{ $item->mengeAnzeige() }} @endif{{ $item->raw_name }}
+                    {{-- Auf Papier ohne Farbe: Ein Stern übersteht auch den
+                         Schwarzweißdrucker. --}}
+                    @if ($item->is_offer) <strong>★ Angebot</strong>@endif
                     @if ($item->note)<span class="gedaempft">— {{ $item->note }}</span>@endif
                     @if ($item->verfuegbarkeitshinweis())<span class="gedaempft">({{ $item->verfuegbarkeitshinweis() }})</span>@endif
                 </li>
